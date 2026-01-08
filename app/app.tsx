@@ -12,16 +12,6 @@ const WEB_TIMING_CONFIG: TimingConfig = {
   wpm: 640,
 };
 
-interface AppState {
-  phase: "paste" | "reading";
-  slides: Slide[] | null;
-  currentSlide: Slide | null;
-  currentTime: number; // milliseconds
-  totalTime: number; // milliseconds
-  playerStatus: "idle" | "playing" | "paused" | "complete";
-  progress: number; // 0-100 percentage
-}
-
 /**
  * Convert milliseconds to mm:ss format
  */
@@ -32,11 +22,107 @@ function formatTime(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+/**
+ * Generate a unique document ID
+ */
+function generateDocumentId(): string {
+  return `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+interface AppState {
+  phase: "paste" | "reading";
+  documentId: string | null;
+  slides: Slide[] | null;
+}
+
 function App() {
   const [state, setState] = useState<AppState>({
     phase: "paste",
+    documentId: null,
     slides: null,
-    currentSlide: null,
+  });
+
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const loadDocument = (text: string) => {
+    const doc = parsePlainText(text);
+    const slides = compile(doc, WEB_TIMING_CONFIG);
+
+    if (slides.length === 0) {
+      alert("No content to read");
+      return;
+    }
+
+    const documentId = generateDocumentId();
+
+    setState({
+      phase: "reading",
+      documentId,
+      slides,
+    });
+  };
+
+  // Handle global paste event
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData("text");
+      if (!text) return;
+
+      e.preventDefault();
+      loadDocument(text);
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, []);
+
+  const handleStart = () => {
+    const text = inputRef.current?.value;
+    if (!text) {
+      alert("Please paste or type some text");
+      return;
+    }
+    loadDocument(text);
+  };
+
+  if (state.phase === "reading" && state.documentId && state.slides) {
+    return <ReadingScreen key={state.documentId} slides={state.slides} />;
+  }
+
+  return (
+    <div className="container paste-screen">
+      <div className="paste-hint">
+        <h1>spdrdr</h1>
+        <p>Press <kbd>Cmd/Ctrl</kbd> + <kbd>V</kbd> to paste and start reading</p>
+        <p className="hint-sub">Or paste text from your clipboard</p>
+      </div>
+      <textarea
+        ref={inputRef}
+        className="paste-input"
+        placeholder="Paste your text here..."
+      />
+      <button className="btn btn-start" onClick={handleStart}>
+        Start Reading
+      </button>
+    </div>
+  );
+}
+
+interface ReadingScreenProps {
+  slides: Slide[];
+}
+
+interface ReadingScreenState {
+  currentSlide: Slide | null;
+  currentTime: number;
+  totalTime: number;
+  playerStatus: "idle" | "playing" | "paused" | "complete";
+  progress: number;
+}
+
+function ReadingScreen({ slides }: ReadingScreenProps) {
+  const [state, setState] = useState<ReadingScreenState>({
+    currentSlide: slides[0] || null,
     currentTime: 0,
     totalTime: 0,
     playerStatus: "idle",
@@ -44,12 +130,9 @@ function App() {
   });
 
   const playerRef = useRef<Player | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  /**
-   * Create and subscribe to player events
-   */
-  const createAndSetupPlayer = (slides: Slide[]) => {
+  // Initialize player
+  useEffect(() => {
     const player = new Player(slides);
 
     player.events.on("slide", ({ slide }) => {
@@ -76,49 +159,23 @@ function App() {
     });
 
     playerRef.current = player;
-    return player;
-  };
+    const totalTime = player.getTotalDurationMs();
 
-  // Handle paste
-  useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      // Handle paste in both paste screen and reading screen
-      const text = e.clipboardData?.getData("text");
-      if (!text) return;
+    setState(prev => ({
+      ...prev,
+      totalTime,
+    }));
 
-      e.preventDefault();
+    // Auto-start playing
+    player.play();
 
-      // Parse and compile
-      const doc = parsePlainText(text);
-      const slides = compile(doc, WEB_TIMING_CONFIG);
-
-      if (slides.length === 0) {
-        alert("No content to read");
-        return;
+    // Cleanup
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.stop();
       }
-
-      const player = createAndSetupPlayer(slides);
-
-      const totalTime = player.getTotalDurationMs();
-
-      setState(prev => ({
-        ...prev,
-        phase: "reading",
-        slides,
-        currentSlide: slides[0],
-        currentTime: 0,
-        totalTime,
-        playerStatus: "idle",
-        progress: 0,
-      }));
-
-      // Auto-start playing
-      player.play();
     };
-
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-  }, []);
+  }, [slides]);
 
   const handlePlayPause = () => {
     if (playerRef.current) {
@@ -147,87 +204,6 @@ function App() {
 
     playerRef.current.seekToTime(time);
   };
-
-  const handleStart = () => {
-    const text = inputRef.current?.value;
-    if (!text) {
-      alert("Please paste or type some text");
-      return;
-    }
-
-    const doc = parsePlainText(text);
-    const slides = compile(doc, WEB_TIMING_CONFIG);
-
-    if (slides.length === 0) {
-      alert("No content to read");
-      return;
-    }
-
-    const player = createAndSetupPlayer(slides);
-    const totalTime = player.getTotalDurationMs();
-
-    setState(prev => ({
-      ...prev,
-      phase: "reading",
-      slides,
-      currentSlide: slides[0],
-      currentTime: 0,
-      totalTime,
-      playerStatus: "idle",
-      progress: 0,
-    }));
-
-    player.play();
-  };
-
-  if (state.phase === "paste") {
-    return (
-      <div className="container paste-screen">
-        <div className="paste-hint">
-          <h1>spdrdr</h1>
-          <p>Press <kbd>Cmd/Ctrl</kbd> + <kbd>V</kbd> to paste and start reading</p>
-          <p className="hint-sub">Or paste text from your clipboard</p>
-        </div>
-        <textarea
-          ref={inputRef}
-          className="paste-input"
-          placeholder="Paste your text here..."
-          onPaste={(e) => {
-            const text = e.clipboardData?.getData("text");
-            if (text) {
-              const doc = parsePlainText(text);
-              const slides = compile(doc, DEFAULT_TIMING_CONFIG);
-
-              if (slides.length === 0) {
-                alert("No content to read");
-                return;
-              }
-
-              const player = createAndSetupPlayer(slides);
-
-              const totalTime = player.getTotalDurationMs();
-
-              setState(prev => ({
-                ...prev,
-                phase: "reading",
-                slides,
-                currentSlide: slides[0],
-                currentTime: 0,
-                totalTime,
-                playerStatus: "idle",
-                progress: 0,
-              }));
-
-              player.play();
-            }
-          }}
-        />
-        <button className="btn btn-start" onClick={handleStart}>
-          Start Reading
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="container reading-screen">
