@@ -145,6 +145,8 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: var(--spacing-4xl);
+  width: 100%;
+  overflow: hidden;
 }
 
 .word {
@@ -152,6 +154,7 @@ body {
   font-weight: 300;
   letter-spacing: 2px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .word .before {
