@@ -1,18 +1,18 @@
 :root {
   /* Colors */
-  --bg-primary: #0d0d0d;
-  --bg-secondary: #1a1a1a;
-  --text-primary: #e8e8e8;
-  --text-secondary: #a0a0a0;
-  --text-muted: #707070;
-  --accent-primary: #667eea;
-  --accent-hover: #5568d3;
-  --accent-orp: #ff4444;
-  --border-color: #333333;
-  --input-bg: rgba(255, 255, 255, 0.08);
-  --input-border: rgba(255, 255, 255, 0.15);
-  --button-secondary-bg: #262626;
-  --button-secondary-hover: #323232;
+  --bg-primary: #12140d;
+  --bg-secondary: #1b1c15;
+  --text-primary: #e3e3d7;
+  --text-secondary: #c6c8b8;
+  --text-muted: #909284;
+  --accent-primary: #bbcf82;
+  --accent-hover: #a8bf60;
+  --accent-orp: #ffb4ab;
+  --border-color: #46483c;
+  --input-bg: rgba(227, 227, 215, 0.08);
+  --input-border: rgba(227, 227, 215, 0.15);
+  --button-secondary-bg: #1f2019;
+  --button-secondary-hover: #292b23;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -64,8 +64,8 @@ body {
 
 /* Paste screen */
 .paste-screen {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #764ba2 100%);
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   flex-direction: column;
 }
 
@@ -88,7 +88,7 @@ body {
 }
 
 .paste-hint kbd {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(227, 227, 215, 0.2);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
   font-family: monospace;
@@ -105,10 +105,10 @@ body {
   max-width: 600px;
   height: 200px;
   padding: var(--spacing-lg);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--input-bg);
+  color: var(--text-primary);
   font-size: var(--font-size-base);
   font-family: inherit;
   resize: none;
@@ -116,12 +116,12 @@ body {
 }
 
 .paste-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .paste-input:focus {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-primary);
+  background: rgba(187, 207, 130, 0.1);
 }
 
 /* Reading screen */
@@ -202,7 +202,7 @@ body {
 .btn-play:hover {
   background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(187, 207, 130, 0.4);
 }
 
 .btn-restart {
