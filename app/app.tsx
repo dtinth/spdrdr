@@ -232,13 +232,8 @@ function Word({ word, pivotIndex }: { word: string; pivotIndex: number }) {
   const orp = word[pivotIndex] || " ";
   const after = word.slice(pivotIndex + 1);
 
-  // Calculate character width in pixels (approximate)
-  // For monospace-like rendering, each character is roughly 0.5em
-  const charWidth = 0.5; // em units
-  const offsetEm = pivotIndex * charWidth;
-
   return (
-    <div className="word" style={{ marginLeft: `calc(-${offsetEm}em)` }}>
+    <div className="word">
       <span className="before">{before}</span>
       <span className="orp">{orp}</span>
       <span className="after">{after}</span>

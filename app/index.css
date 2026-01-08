@@ -150,24 +150,31 @@ body {
 }
 
 .word {
+  display: flex;
+  width: 100%;
   font-size: var(--font-size-2xl);
   font-weight: 300;
   letter-spacing: 2px;
   line-height: 1.2;
-  white-space: nowrap;
+  align-items: center;
 }
 
 .word .before {
+  flex: 4 0 0;
   color: var(--text-secondary);
+  text-align: right;
 }
 
 .word .orp {
+  flex: none;
   color: var(--accent-orp);
   font-weight: 600;
 }
 
 .word .after {
+  flex: 6 0 0;
   color: var(--text-secondary);
+  text-align: left;
 }
 
 .controls {
