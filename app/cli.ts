@@ -30,23 +30,31 @@ function displayWord(word: string, ropIndex: number): void {
   // Clear screen and position cursor
   process.stdout.write("\u001B[2J\u001B[0;0H");
 
-  // Center vertically and horizontally
+  // Fixed focal point at center of screen
   const lines = process.stdout.rows || 24;
   const cols = process.stdout.columns || 80;
   const centerLine = Math.floor(lines / 2);
-  const padding = "\n".repeat(Math.max(0, centerLine - 1));
+  const focalCol = Math.floor(cols / 2);
 
-  // Build the word with ORP highlighted
-  const before = word.slice(0, ropIndex);
+  // Position word so ORP character is at focal point
+  const beforeORP = word.slice(0, ropIndex);
   const orp = word[ropIndex] || " ";
-  const after = word.slice(ropIndex + 1);
-  const highlighted = before + "\u001B[1;7m" + orp + "\u001B[0m" + after;
+  const afterORP = word.slice(ropIndex + 1);
 
-  // Center horizontally
-  const wordLength = word.length;
-  const leftPad = Math.max(0, Math.floor((cols - wordLength) / 2));
-  const line = " ".repeat(leftPad) + highlighted;
+  // Calculate starting column to align ORP at focal point
+  const startCol = Math.max(0, focalCol - ropIndex);
 
+  // Build line with red ORP character
+  const line =
+    " ".repeat(startCol) +
+    beforeORP +
+    "\u001B[91m" + // Bright red
+    orp +
+    "\u001B[0m" + // Reset
+    afterORP;
+
+  // Position cursor at center line
+  const padding = "\n".repeat(Math.max(0, centerLine - 1));
   process.stdout.write(padding + line + "\n");
 }
 
