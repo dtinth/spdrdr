@@ -169,7 +169,6 @@ body {
 .word .orp {
   flex: none;
   color: var(--accent-orp);
-  font-weight: 600;
 }
 
 .word .after {
