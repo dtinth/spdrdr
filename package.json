@@ -1,0 +1,34 @@
+{
+  "name": "spdrdr",
+  "version": "0.1.0",
+  "description": "RSVP speed reading library",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target browser",
+    "build:app": "bun build ./app/main.ts --outdir ./public --minify",
+    "dev": "bun --watch ./app/main.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "typecheck:app": "tsc --noEmit -p tsconfig.app.json",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@tsconfig/bun": "^1.0.10",
+    "@types/bun": "latest",
+    "@types/node": "^25.0.3",
+    "typescript": "^5"
+  }
+}
