@@ -29,6 +29,7 @@
     "@tsconfig/bun": "^1.0.10",
     "@types/bun": "latest",
     "@types/node": "^25.0.3",
+    "mitt": "^3.0.1",
     "typescript": "^5"
   }
 }
