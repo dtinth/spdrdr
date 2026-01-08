@@ -147,6 +147,7 @@ body {
   margin-bottom: var(--spacing-4xl);
   width: 100%;
   overflow: hidden;
+  align-self: stretch;
 }
 
 .word {
