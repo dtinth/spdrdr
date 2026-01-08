@@ -212,11 +212,66 @@ Over the lazy dog it goes.`;
         expect(slide.word).toBeTruthy();
         expect(slide.pivotIndex).toBeGreaterThanOrEqual(0);
         expect(slide.duration).toBeGreaterThan(0);
+        expect(slide.startTime).toBeGreaterThanOrEqual(0);
         expect(slide.blockId).toBeTruthy();
         expect(slide.wordIndex).toBeGreaterThanOrEqual(0);
         expect(typeof slide.isBlockEnd).toBe("boolean");
         expect(typeof slide.isDocumentEnd).toBe("boolean");
       }
+    });
+  });
+
+  describe("time calculations", () => {
+    it("calculates startTime for each slide", () => {
+      const doc = parsePlainText("One two three");
+      const slides = compile(doc);
+
+      // All slides should have startTime >= 0
+      expect(slides[0].startTime).toBe(0);
+      expect(slides[1].startTime).toBeGreaterThan(0);
+      expect(slides[2].startTime).toBeGreaterThan(slides[1].startTime);
+    });
+
+    it("startTime increases monotonically", () => {
+      const doc = parsePlainText("One two three four five");
+      const slides = compile(doc);
+
+      for (let i = 1; i < slides.length; i++) {
+        expect(slides[i].startTime).toBeGreaterThanOrEqual(
+          slides[i - 1].startTime
+        );
+      }
+    });
+
+    it("accounts for block gaps in timing", () => {
+      const doc = parsePlainText("First.\n\nSecond.");
+      const slides = compile(doc);
+
+      // First block: "First."
+      // Second block: "Second."
+      // Time should include gap between blocks
+
+      const lastSlideOfFirstBlock = slides[0]; // "First."
+      const firstSlideOfSecondBlock = slides[1]; // "Second."
+
+      // Gap between blocks should be DEFAULT_TIMING_CONFIG.blockGap = 100ms
+      const blockGap = DEFAULT_TIMING_CONFIG.blockGap;
+      const expectedSecondBlockStartTime =
+        lastSlideOfFirstBlock.startTime +
+        lastSlideOfFirstBlock.duration +
+        blockGap;
+
+      expect(firstSlideOfSecondBlock.startTime).toBe(expectedSecondBlockStartTime);
+    });
+
+    it("total duration equals last slide startTime plus duration", () => {
+      const doc = parsePlainText("One two three");
+      const slides = compile(doc);
+
+      const lastSlide = slides[slides.length - 1];
+      const totalDuration = lastSlide.startTime + lastSlide.duration;
+
+      expect(totalDuration).toBeGreaterThan(0);
     });
   });
 });

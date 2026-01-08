@@ -133,6 +133,66 @@ describe("tokenize", () => {
     });
   });
 
+  describe("slash splitting", () => {
+    it("splits on forward slash, attaching slash to preceding word", () => {
+      const tokens = tokenize("setTimeout/setInterval");
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].word).toBe("setTimeout/");
+      expect(tokens[1].word).toBe("setInterval");
+    });
+
+    it("handles multiple slashes", () => {
+      const tokens = tokenize("a/b/c");
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0].word).toBe("a/");
+      expect(tokens[1].word).toBe("b/");
+      expect(tokens[2].word).toBe("c");
+    });
+
+    it("tracks positions correctly with slashes", () => {
+      const text = "setTimeout/setInterval";
+      const tokens = tokenize(text);
+
+      // "setTimeout/" includes the slash
+      expect(tokens[0].startIndex).toBe(0);
+      expect(tokens[0].endIndex).toBe(10);
+      expect(text.slice(tokens[0].startIndex, tokens[0].endIndex)).toBe("setTimeout");
+
+      // "setInterval" starts after the slash
+      expect(tokens[1].startIndex).toBe(11);
+      expect(tokens[1].endIndex).toBe(22);
+      expect(text.slice(tokens[1].startIndex, tokens[1].endIndex)).toBe("setInterval");
+    });
+
+    it("handles slash with trailing punctuation", () => {
+      const tokens = tokenize("Hello/world!");
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0].word).toBe("Hello/");
+      expect(tokens[1].word).toBe("world!");
+    });
+
+    it("handles mixed whitespace and slashes", () => {
+      const tokens = tokenize("foo/bar hello/world");
+      expect(tokens).toHaveLength(4);
+      expect(tokens[0].word).toBe("foo/");
+      expect(tokens[1].word).toBe("bar");
+      expect(tokens[2].word).toBe("hello/");
+      expect(tokens[3].word).toBe("world");
+    });
+
+    it("verifies all tokens with slashes map back to original text", () => {
+      const text = "setTimeout/setInterval fetch/XMLHttpRequest";
+      const tokens = tokenize(text);
+
+      for (const token of tokens) {
+        // word may include slash, indices point to the word without slash
+        const wordWithoutSlash = token.word.replace(/-$/, "").replace(/\/$/, "");
+        const mapped = text.slice(token.startIndex, token.endIndex);
+        expect(mapped).toBe(wordWithoutSlash);
+      }
+    });
+  });
+
   describe("integration tests", () => {
     it("tokenizes complex text", () => {
       const text = "The quick brown fox jumps over the lazy dog.";

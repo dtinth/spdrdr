@@ -231,7 +231,6 @@ body {
 .progress-bar {
   height: 100%;
   background: var(--accent-primary);
-  transition: width var(--transition-fast) linear;
 }
 
 .info {

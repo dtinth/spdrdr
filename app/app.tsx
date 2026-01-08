@@ -2,17 +2,34 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom/client";
 import { parsePlainText } from "../src/parser/plaintext";
 import { compile } from "../src/compiler/compile";
-import { DEFAULT_TIMING_CONFIG } from "../src/timing/config";
+import { DEFAULT_TIMING_CONFIG, type TimingConfig } from "../src/timing/config";
 import { Player } from "../src/player";
 import type { Slide } from "../src/types";
+
+// Web app timing config (640 WPM for RSVP)
+const WEB_TIMING_CONFIG: TimingConfig = {
+  ...DEFAULT_TIMING_CONFIG,
+  wpm: 640,
+};
 
 interface AppState {
   phase: "paste" | "reading";
   slides: Slide[] | null;
   currentSlide: Slide | null;
-  currentIndex: number;
+  currentTime: number; // milliseconds
+  totalTime: number; // milliseconds
   playerStatus: "idle" | "playing" | "paused" | "complete";
-  progress: number;
+  progress: number; // 0-100 percentage
+}
+
+/**
+ * Convert milliseconds to mm:ss format
+ */
+function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function App() {
@@ -20,7 +37,8 @@ function App() {
     phase: "paste",
     slides: null,
     currentSlide: null,
-    currentIndex: 0,
+    currentTime: 0,
+    totalTime: 0,
     playerStatus: "idle",
     progress: 0,
   });
@@ -28,11 +46,43 @@ function App() {
   const playerRef = useRef<Player | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  /**
+   * Create and subscribe to player events
+   */
+  const createAndSetupPlayer = (slides: Slide[]) => {
+    const player = new Player(slides);
+
+    player.events.on("slide", ({ slide }) => {
+      setState(prev => ({
+        ...prev,
+        currentSlide: slide,
+      }));
+    });
+
+    player.events.on("statusChange", ({ status }) => {
+      setState(prev => ({
+        ...prev,
+        playerStatus: status,
+      }));
+    });
+
+    player.events.on("progress", ({ currentTime, totalTime }) => {
+      setState(prev => ({
+        ...prev,
+        currentTime,
+        totalTime,
+        progress: totalTime > 0 ? (currentTime / totalTime) * 100 : 0,
+      }));
+    });
+
+    playerRef.current = player;
+    return player;
+  };
+
   // Handle paste
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (state.phase !== "paste") return;
-
+      // Handle paste in both paste screen and reading screen
       const text = e.clipboardData?.getData("text");
       if (!text) return;
 
@@ -40,46 +90,24 @@ function App() {
 
       // Parse and compile
       const doc = parsePlainText(text);
-      const slides = compile(doc, DEFAULT_TIMING_CONFIG);
+      const slides = compile(doc, WEB_TIMING_CONFIG);
 
       if (slides.length === 0) {
         alert("No content to read");
         return;
       }
 
-      // Create player
-      const player = new Player(slides);
+      const player = createAndSetupPlayer(slides);
 
-      player.events.on("slide", ({ slide, index }) => {
-        setState(prev => ({
-          ...prev,
-          currentSlide: slide,
-          currentIndex: index,
-        }));
-      });
-
-      player.events.on("statusChange", ({ status }) => {
-        setState(prev => ({
-          ...prev,
-          playerStatus: status,
-        }));
-      });
-
-      player.events.on("progress", ({ current, total }) => {
-        setState(prev => ({
-          ...prev,
-          progress: total > 0 ? (current / total) * 100 : 0,
-        }));
-      });
-
-      playerRef.current = player;
+      const totalTime = player.getTotalDurationMs();
 
       setState(prev => ({
         ...prev,
         phase: "reading",
         slides,
         currentSlide: slides[0],
-        currentIndex: 0,
+        currentTime: 0,
+        totalTime,
         playerStatus: "idle",
         progress: 0,
       }));
@@ -90,7 +118,7 @@ function App() {
 
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, [state.phase]);
+  }, []);
 
   const handlePlayPause = () => {
     if (playerRef.current) {
@@ -105,19 +133,19 @@ function App() {
         ...prev,
         playerStatus: "idle",
         progress: 0,
-        currentIndex: 0,
+        currentTime: 0,
       }));
     }
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!playerRef.current || !state.slides) return;
+    if (!playerRef.current || state.totalTime === 0) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
-    const index = Math.floor(percent * state.slides.length);
+    const time = percent * state.totalTime;
 
-    playerRef.current.seekTo(index);
+    playerRef.current.seekToTime(time);
   };
 
   if (state.phase === "paste") {
@@ -143,38 +171,17 @@ function App() {
                 return;
               }
 
-              const player = new Player(slides);
+              const player = createAndSetupPlayer(slides);
 
-              player.events.on("slide", ({ slide, index }) => {
-                setState(prev => ({
-                  ...prev,
-                  currentSlide: slide,
-                  currentIndex: index,
-                }));
-              });
-
-              player.events.on("statusChange", ({ status }) => {
-                setState(prev => ({
-                  ...prev,
-                  playerStatus: status,
-                }));
-              });
-
-              player.events.on("progress", ({ current, total }) => {
-                setState(prev => ({
-                  ...prev,
-                  progress: total > 0 ? (current / total) * 100 : 0,
-                }));
-              });
-
-              playerRef.current = player;
+              const totalTime = player.getTotalDurationMs();
 
               setState(prev => ({
                 ...prev,
                 phase: "reading",
                 slides,
                 currentSlide: slides[0],
-                currentIndex: 0,
+                currentTime: 0,
+                totalTime,
                 playerStatus: "idle",
                 progress: 0,
               }));
@@ -218,7 +225,7 @@ function App() {
 
         <div className="info">
           <span>
-            {state.currentIndex + 1} / {state.slides?.length || 0}
+            {formatTime(state.currentTime)} / {formatTime(state.totalTime)}
           </span>
           <span className="status">{state.playerStatus}</span>
         </div>

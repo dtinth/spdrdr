@@ -30,6 +30,8 @@
     "@types/bun": "latest",
     "@types/node": "^25.0.3",
     "mitt": "^3.0.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "typescript": "^5"
   }
 }

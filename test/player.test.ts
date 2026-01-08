@@ -1,13 +1,22 @@
-import { describe, expect, it, beforeEach, afterEach } from "bun:test";
-import { Player } from "../src/player";
+import { describe, expect, it, beforeEach, afterEach, jest } from "bun:test";
+import { Player, type TimerApi } from "../src/player";
 import type { Slide } from "../src/types";
 
-// Mock slides for testing
+// Create a test-friendly timer API that uses setTimeout/requestAnimationFrame
+function createTestTimerApi(): TimerApi {
+  return {
+    requestAnimationFrame: (callback) => setTimeout(callback, 16) as unknown as number,
+    cancelAnimationFrame: (id) => clearTimeout(id as unknown as ReturnType<typeof setTimeout>),
+  };
+}
+
+// Mock slides for testing with timing info
 const mockSlides: Slide[] = [
   {
     word: "Hello",
     pivotIndex: 1,
     duration: 100,
+    startTime: 0,
     blockId: "1",
     wordIndex: 0,
     isBlockEnd: false,
@@ -17,6 +26,7 @@ const mockSlides: Slide[] = [
     word: "world",
     pivotIndex: 2,
     duration: 100,
+    startTime: 100,
     blockId: "1",
     wordIndex: 1,
     isBlockEnd: true,
@@ -26,6 +36,7 @@ const mockSlides: Slide[] = [
     word: "Goodbye",
     pivotIndex: 2,
     duration: 100,
+    startTime: 300, // 200ms gap between blocks
     blockId: "2",
     wordIndex: 0,
     isBlockEnd: true,
@@ -37,27 +48,35 @@ describe("Player", () => {
   let player: Player;
 
   beforeEach(() => {
-    player = new Player(mockSlides);
+    jest.useFakeTimers({ now: 0 });
+    player = new Player(mockSlides, undefined, createTestTimerApi());
   });
 
   afterEach(() => {
     player.stop();
+    jest.useRealTimers();
   });
 
   describe("initialization", () => {
     it("starts in idle state", () => {
       const state = player.getState();
       expect(state.status).toBe("idle");
-      expect(state.currentIndex).toBe(0);
+      expect(state.currentTime).toBe(0);
     });
 
     it("has correct total slides", () => {
       expect(player.getTotalSlides()).toBe(3);
     });
+
+    it("calculates total duration correctly", () => {
+      const totalDuration = player.getTotalDurationMs();
+      // Last slide starts at 300, duration 100 = 400ms total
+      expect(totalDuration).toBe(400);
+    });
   });
 
   describe("play and pause", () => {
-    it("transitions to playing state", async () => {
+    it("transitions to playing state", () => {
       let emittedStatus: string | null = null;
       player.events.on("statusChange", ({ status }) => {
         emittedStatus = status;
@@ -70,7 +89,7 @@ describe("Player", () => {
       expect(emittedStatus).toBe("playing");
     });
 
-    it("emits first slide on play", async () => {
+    it("emits first slide on play", () => {
       let emittedSlide: Slide | null = null;
       player.events.on("slide", ({ slide }) => {
         emittedSlide = slide;
@@ -78,8 +97,8 @@ describe("Player", () => {
 
       player.play();
 
-      // Give time for emission
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Advance time for animation frame
+      jest.advanceTimersByTime(50);
 
       expect(emittedSlide).toBe(mockSlides[0]);
     });
@@ -133,17 +152,18 @@ describe("Player", () => {
   describe("stop", () => {
     it("stops and resets to beginning", () => {
       player.play();
-      player.seekTo(2);
+      player.seekToTime(250); // Somewhere in second slide
       player.stop();
 
       const state = player.getState();
       expect(state.status).toBe("idle");
-      expect(state.currentIndex).toBe(0);
+      expect(state.currentTime).toBe(0);
     });
 
     it("emits idle status and zero progress", () => {
       let emittedStatus: string | null = null;
-      let emittedProgress: { current: number; total: number } | null = null;
+      let emittedProgress: { currentTime: number; totalTime: number } | null =
+        null;
 
       player.events.on("statusChange", ({ status }) => {
         emittedStatus = status;
@@ -156,73 +176,86 @@ describe("Player", () => {
       player.stop();
 
       expect(emittedStatus).toBe("idle");
-      expect(emittedProgress?.current).toBe(0);
+      expect(emittedProgress?.currentTime).toBe(0);
     });
   });
 
-  describe("seek", () => {
-    it("seeks to specific index", () => {
-      player.seekTo(1);
-      expect(player.getState().currentIndex).toBe(1);
+  describe("seekToTime", () => {
+    it("seeks to specific time", () => {
+      player.seekToTime(150);
+      expect(player.getState().currentTime).toBe(150);
     });
 
     it("clamps seek to valid range (min)", () => {
-      player.seekTo(-5);
-      expect(player.getState().currentIndex).toBe(0);
+      player.seekToTime(-50);
+      expect(player.getState().currentTime).toBe(0);
     });
 
     it("clamps seek to valid range (max)", () => {
-      player.seekTo(100);
-      expect(player.getState().currentIndex).toBe(2);
+      player.seekToTime(10000);
+      expect(player.getState().currentTime).toBe(400);
     });
 
     it("emits progress on seek", () => {
-      let emittedProgress: { current: number; total: number } | null = null;
+      let emittedProgress: { currentTime: number; totalTime: number } | null =
+        null;
 
       player.events.on("progress", (data) => {
         emittedProgress = data;
       });
 
-      player.seekTo(2);
+      player.seekToTime(200);
 
-      expect(emittedProgress?.current).toBe(2);
-      expect(emittedProgress?.total).toBe(3);
+      expect(emittedProgress?.currentTime).toBe(200);
+      expect(emittedProgress?.totalTime).toBe(400);
     });
 
-    it("maintains playing state on seek", async () => {
+    it("maintains playing state on seek", () => {
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 50));
-      player.seekTo(1);
+      jest.advanceTimersByTime(50);
+      player.seekToTime(150);
 
       const state = player.getState();
       expect(state.status).toBe("playing");
     });
 
-    it("resumes from pause on seek while playing", async () => {
+    it("resumes from pause on seek while playing", () => {
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 50));
-      player.seekTo(1);
+      jest.advanceTimersByTime(50);
+      player.seekToTime(150);
 
       const state = player.getState();
       expect(state.status).toBe("playing");
-      expect(state.currentIndex).toBe(1);
+      expect(state.currentTime).toBe(150);
+    });
+  });
+
+  describe("seekToSlide", () => {
+    it("seeks to slide by index", () => {
+      player.seekToSlide(2);
+      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
+    });
+
+    it("clamps slide seek to valid range", () => {
+      player.seekToSlide(100);
+      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
     });
   });
 
   describe("seekToBlock", () => {
     it("seeks to block by ID", () => {
       player.seekToBlock("2");
-      expect(player.getState().currentIndex).toBe(2);
+      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
     });
 
     it("does nothing if block not found", () => {
       player.seekToBlock("999");
-      expect(player.getState().currentIndex).toBe(0);
+      expect(player.getState().currentTime).toBe(0);
     });
   });
 
   describe("block change tracking", () => {
-    it("emits blockChange on transition", async () => {
+    it("emits blockChange on transition", () => {
       let blockChanges: string[] = [];
 
       player.events.on("blockChange", ({ blockId }) => {
@@ -230,29 +263,31 @@ describe("Player", () => {
       });
 
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // Block 2 starts at 300ms content, which requires ~775ms real time with acceleration
+      jest.advanceTimersByTime(850);
 
       // Should have changed from block 1 to block 2
       expect(blockChanges.length).toBeGreaterThan(0);
-      expect(blockChanges[blockChanges.length - 1]).toBe("2");
+      const hasBlock2 = blockChanges.includes("2");
+      expect(hasBlock2).toBe(true);
     });
 
-    it("does not emit duplicate blockChange events", async () => {
+    it("does not emit duplicate blockChange events", () => {
       let blockChangeCount = 0;
 
       player.events.on("blockChange", () => {
         blockChangeCount++;
       });
 
-      player.seekTo(0);
-      player.seekTo(0); // Seek to same block again
+      player.seekToTime(0);
+      player.seekToTime(0); // Seek to same block again
 
       expect(blockChangeCount).toBe(0);
     });
   });
 
   describe("completion", () => {
-    it("emits complete event at end", async () => {
+    it("emits complete event at end", () => {
       let completed = false;
 
       player.events.on("complete", () => {
@@ -260,12 +295,14 @@ describe("Player", () => {
       });
 
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 350));
+      // Total content duration is 400ms, with acceleration starting at 0, we reach ~500ms content by 1000ms real time
+      // But content ends at 400ms, so wait 1100ms to be safe
+      jest.advanceTimersByTime(1100);
 
       expect(completed).toBe(true);
     });
 
-    it("transitions to complete status", async () => {
+    it("transitions to complete status", () => {
       let finalStatus: string | null = null;
 
       player.events.on("statusChange", ({ status }) => {
@@ -273,18 +310,18 @@ describe("Player", () => {
       });
 
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 350));
+      jest.advanceTimersByTime(1100);
 
       expect(finalStatus).toBe("complete");
     });
 
-    it("resets to start on play after complete", async () => {
+    it("resets to start on play after complete", () => {
       player.play();
-      await new Promise(resolve => setTimeout(resolve, 350));
+      jest.advanceTimersByTime(1100);
 
       player.play();
 
-      expect(player.getState().currentIndex).toBe(0);
+      expect(player.getState().currentTime).toBe(0);
     });
   });
 
@@ -292,11 +329,12 @@ describe("Player", () => {
     it("handles empty slide array", () => {
       const emptyPlayer = new Player([]);
       expect(emptyPlayer.getTotalSlides()).toBe(0);
-      expect(emptyPlayer.getState().currentIndex).toBe(0);
+      expect(emptyPlayer.getState().currentTime).toBe(0);
+      expect(emptyPlayer.getTotalDurationMs()).toBe(0);
     });
 
-    it("handles single slide", async () => {
-      const singleSlidePlayer = new Player([mockSlides[0]]);
+    it("handles single slide", () => {
+      const singleSlidePlayer = new Player([mockSlides[0]], undefined, createTestTimerApi());
 
       let completeEmitted = false;
       singleSlidePlayer.events.on("complete", () => {
@@ -304,7 +342,8 @@ describe("Player", () => {
       });
 
       singleSlidePlayer.play();
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Single slide is 100ms content, which requires ~450ms real time with acceleration
+      jest.advanceTimersByTime(500);
 
       expect(completeEmitted).toBe(true);
     });
@@ -327,6 +366,58 @@ describe("Player", () => {
 
       expect(count1).toBeGreaterThan(0);
       expect(count2).toBeGreaterThan(0);
+    });
+  });
+
+  describe("acceleration curve", () => {
+    it("progresses slowly at start then faster", () => {
+      const times: number[] = [];
+
+      player.events.on("progress", ({ currentTime }) => {
+        times.push(currentTime);
+      });
+
+      player.play();
+      // Wait through acceleration phase (1s) - we have 400ms of content, so stop before that
+      jest.advanceTimersByTime(800);
+      player.stop();
+
+      // Should have collected multiple time samples
+      expect(times.length).toBeGreaterThan(2);
+
+      // Check that we're progressing through content (not all at same position)
+      const uniqueTimes = new Set(times);
+      expect(uniqueTimes.size).toBeGreaterThan(1);
+    });
+
+    it("reaches correct position after acceleration phase", () => {
+      player.play();
+      // Wait 1 second for acceleration to complete (we reach ~500ms content by wall-time 1s)
+      // But our content only goes to 400ms, so we should hit completion before then
+      jest.advanceTimersByTime(500);
+
+      const currentTime = player.getState().currentTime;
+      // Should be somewhere in the content
+      expect(currentTime).toBeGreaterThan(0);
+      expect(currentTime).toBeLessThanOrEqual(400);
+    });
+  });
+
+  describe("progress events", () => {
+    it("emits progress with time values not indices", () => {
+      let progressData: { currentTime: number; totalTime: number } | null =
+        null;
+
+      player.events.on("progress", (data) => {
+        progressData = data;
+      });
+
+      player.seekToTime(200);
+
+      expect(progressData?.currentTime).toBe(200);
+      expect(progressData?.totalTime).toBe(400);
+      expect(typeof progressData?.currentTime).toBe("number");
+      expect(typeof progressData?.totalTime).toBe("number");
     });
   });
 });

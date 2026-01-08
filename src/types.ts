@@ -42,6 +42,9 @@ export interface Slide {
   /** Calculated display duration in milliseconds */
   duration: number;
 
+  /** Absolute start time of this slide in milliseconds (cumulative) */
+  startTime: number;
+
   /** Reference to parent block */
   blockId: string;
 

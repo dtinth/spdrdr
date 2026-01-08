@@ -47,37 +47,59 @@ export function tokenize(
       continue;
     }
 
-    // Find end of word (next whitespace)
+    // Find end of word (next whitespace or slash)
     let wordEnd = currentIndex;
-    while (wordEnd < text.length && !/\s/.test(text[wordEnd])) {
+    while (wordEnd < text.length && !/[\s/]/.test(text[wordEnd])) {
+      wordEnd++;
+    }
+
+    // Include trailing slash with the word
+    let includeSlash = false;
+    if (wordEnd < text.length && text[wordEnd] === "/") {
+      includeSlash = true;
       wordEnd++;
     }
 
     const word = text.slice(currentIndex, wordEnd);
 
-    // Hyphenate if needed
-    if (word.length > maxWordLength) {
-      const fragments = hyphenator(word, maxWordLength);
+    // Hyphenate if needed (remove slash for hyphenation, then re-add to last fragment)
+    let wordToHyphenate = word;
+    let trailingSlash = "";
+
+    if (includeSlash && word.endsWith("/")) {
+      trailingSlash = "/";
+      wordToHyphenate = word.slice(0, -1);
+    }
+
+    if (wordToHyphenate.length > maxWordLength) {
+      const fragments = hyphenator(wordToHyphenate, maxWordLength);
       let fragmentStartIndex = currentIndex;
 
-      for (const fragment of fragments) {
-        // Fragment may have trailing hyphen, but indices should not include it
-        const withoutHyphen = fragment.endsWith("-")
-          ? fragment.slice(0, -1)
-          : fragment;
+      for (let i = 0; i < fragments.length; i++) {
+        let fragment = fragments[i];
+
+        // Add slash back to the last fragment if we removed it
+        if (i === fragments.length - 1 && trailingSlash) {
+          fragment += trailingSlash;
+        }
+
+        // Fragment may have trailing hyphen or slash, but indices should not include them
+        const withoutSuffixes = fragment.replace(/[-/]$/, "");
 
         tokens.push({
           word: fragment,
           startIndex: fragmentStartIndex,
-          endIndex: fragmentStartIndex + withoutHyphen.length,
+          endIndex: fragmentStartIndex + withoutSuffixes.length,
         });
-        fragmentStartIndex += withoutHyphen.length;
+        fragmentStartIndex += withoutSuffixes.length;
       }
     } else {
+      // Calculate endIndex (excluding slash if present)
+      const endIndex = currentIndex + word.length - (includeSlash ? 1 : 0);
       tokens.push({
         word,
         startIndex: currentIndex,
-        endIndex: wordEnd,
+        endIndex,
       });
     }
 

@@ -26,11 +26,12 @@ export interface TimingConfig {
    */
   lengthFactor: number;
 
-  /** Number of words at start that get slow-start treatment */
-  slowStartCount: number;
-
-  /** Initial multiplier for slow start (decays to 1.0) */
-  slowStartMultiplier: number;
+  /**
+   * Gap between blocks in milliseconds
+   * During this gap, no slide is displayed (blank screen)
+   * Provides visual feedback that a new block has started
+   */
+  blockGap: number;
 }
 
 export const DEFAULT_TIMING_CONFIG: TimingConfig = {
@@ -42,6 +43,5 @@ export const DEFAULT_TIMING_CONFIG: TimingConfig = {
   longWordMultiplier: 1.4,
   headingMultiplier: 1.5,
   lengthFactor: 0.04,
-  slowStartCount: 5,
-  slowStartMultiplier: 2.0,
+  blockGap: 100, // 0.1 second
 };

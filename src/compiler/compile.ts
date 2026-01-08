@@ -22,6 +22,8 @@ export function compile(
     return slides;
   }
 
+  let cumulativeTime = 0;
+
   for (let blockIndex = 0; blockIndex < document.blocks.length; blockIndex++) {
     const block = document.blocks[blockIndex];
     const tokens = tokenize(block.text);
@@ -42,11 +44,19 @@ export function compile(
         word: token.word,
         pivotIndex,
         duration,
+        startTime: cumulativeTime,
         blockId: block.id,
         wordIndex,
         isBlockEnd: isLastWordInBlock,
         isDocumentEnd: isLastWordInDocument,
       });
+
+      cumulativeTime += duration;
+    }
+
+    // Add block gap after each block (except the last one)
+    if (!isLastBlock) {
+      cumulativeTime += config.blockGap;
     }
   }
 
