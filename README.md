@@ -1,15 +1,45 @@
 # spdrdr
 
-To install dependencies:
+RSVP speed reading library and web app.
+
+## Build
+
+Install dependencies:
 
 ```bash
 bun install
 ```
 
-To run:
+Build the library:
 
 ```bash
-bun run index.ts
+bun run build
 ```
 
-This project was created using `bun init` in bun v1.3.5. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Build the web app:
+
+```bash
+bun run build:app
+```
+
+## Development
+
+Run tests:
+
+```bash
+bun test
+bun test --watch
+```
+
+Type checking:
+
+```bash
+bun run typecheck
+```
+
+Lint and format:
+
+```bash
+bun run lint
+bun run format
+```
