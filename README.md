@@ -24,6 +24,12 @@ bun run build:app
 
 ## Development
 
+Run the web app dev server:
+
+```bash
+bun run dev
+```
+
 Run tests:
 
 ```bash

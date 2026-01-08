@@ -14,8 +14,8 @@
   "files": ["dist"],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target browser",
-    "build:app": "bun build ./app/main.ts --outdir ./public --minify",
-    "dev": "bun --watch ./app/main.ts",
+    "build:app": "bun build ./app/index.html --outdir ./public",
+    "dev": "bun app/index.html",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
