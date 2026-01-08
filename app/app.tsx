@@ -148,6 +148,38 @@ function App() {
     playerRef.current.seekToTime(time);
   };
 
+  const handleStart = () => {
+    const text = inputRef.current?.value;
+    if (!text) {
+      alert("Please paste or type some text");
+      return;
+    }
+
+    const doc = parsePlainText(text);
+    const slides = compile(doc, WEB_TIMING_CONFIG);
+
+    if (slides.length === 0) {
+      alert("No content to read");
+      return;
+    }
+
+    const player = createAndSetupPlayer(slides);
+    const totalTime = player.getTotalDurationMs();
+
+    setState(prev => ({
+      ...prev,
+      phase: "reading",
+      slides,
+      currentSlide: slides[0],
+      currentTime: 0,
+      totalTime,
+      playerStatus: "idle",
+      progress: 0,
+    }));
+
+    player.play();
+  };
+
   if (state.phase === "paste") {
     return (
       <div className="container paste-screen">
@@ -190,6 +222,9 @@ function App() {
             }
           }}
         />
+        <button className="btn btn-start" onClick={handleStart}>
+          Start Reading
+        </button>
       </div>
     );
   }
