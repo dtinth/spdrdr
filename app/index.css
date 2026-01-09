@@ -13,8 +13,24 @@
   --border-color: #46483c;
   --input-bg: rgba(227, 227, 215, 0.08);
   --input-border: rgba(227, 227, 215, 0.15);
-  --button-secondary-bg: #1f2019;
-  --button-secondary-hover: #292b23;
+  /* Buttons */
+  --btn-primary-color: #000000;
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover-bg: var(--accent-hover);
+  --btn-secondary-color: var(--text-primary);
+  --btn-secondary-bg: #1f2019;
+  --btn-secondary-hover-bg: #292b23;
+  --btn-start-color: #283500;
+  --btn-start-bg: var(--accent-primary);
+  --btn-start-hover-bg: var(--accent-hover);
+
+  /* Progress bar */
+  --progress-bg: var(--border-color);
+  --progress-fill: var(--accent-primary);
+
+  /* Info/Status text in reading screen */
+  --info-color: var(--text-reading);
+  --status-color: var(--text-reading);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -197,39 +213,39 @@ body {
 }
 
 .btn-play {
-  background: var(--accent-primary);
-  color: #000000;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
   min-width: 140px;
 }
 
 .btn-play:hover {
-  background: var(--accent-hover);
+  background: var(--btn-primary-hover-bg);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(187, 207, 130, 0.4);
 }
 
 .btn-restart {
-  background: var(--button-secondary-bg);
-  color: var(--text-primary);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
   min-width: 120px;
 }
 
 .btn-restart:hover {
-  background: var(--button-secondary-hover);
+  background: var(--btn-secondary-hover-bg);
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-start {
-  background: var(--accent-primary);
-  color: #283500;
+  background: var(--btn-start-bg);
+  color: var(--btn-start-color);
   min-width: 140px;
   margin-top: var(--spacing-lg);
   font-weight: 600;
 }
 
 .btn-start:hover {
-  background: var(--accent-hover);
+  background: var(--btn-start-hover-bg);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(187, 207, 130, 0.4);
 }
@@ -237,7 +253,7 @@ body {
 .progress-container {
   width: 100%;
   height: 4px;
-  background: var(--border-color);
+  background: var(--progress-bg);
   border-radius: var(--radius-sm);
   cursor: pointer;
   overflow: hidden;
@@ -246,14 +262,14 @@ body {
 
 .progress-bar {
   height: 100%;
-  background: var(--accent-primary);
+  background: var(--progress-fill);
 }
 
 .info {
   display: flex;
   gap: var(--spacing-xl);
   font-size: var(--font-size-sm);
-  color: var(--text-reading);
+  color: var(--info-color);
   width: 100%;
   justify-content: space-between;
 }
@@ -261,7 +277,7 @@ body {
 .status {
   text-transform: capitalize;
   font-weight: 500;
-  color: var(--text-reading);
+  color: var(--status-color);
 }
 
 .document-view {
