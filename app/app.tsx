@@ -339,8 +339,8 @@ function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlide
           >
             {state.playerStatus === "playing" ? "⏸ Pause" : "▶ Play"}
           </button>
-          <button className="btn btn-restart" onClick={handleRestart} title="Restart">
-            ↺ Restart
+          <button className="btn btn-restart" onClick={handleRestart} title="Stop">
+            ◾ Stop
           </button>
         </div>
 
