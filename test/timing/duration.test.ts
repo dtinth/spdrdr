@@ -202,4 +202,28 @@ describe("calculateDuration", () => {
     // At minimum: 2.5 * 2.5 * 1.3 = 8.125x multiplier
     expect(duration / baseDuration).toBeGreaterThan(8);
   });
+
+  it("applies clauseBreakMultiplier to comma words", () => {
+    const withoutComma = calculateDuration("hello", DEFAULT_TIMING_CONFIG, baseContext);
+    const withComma = calculateDuration("hello,", DEFAULT_TIMING_CONFIG, baseContext);
+
+    // Should be longer with comma due to clauseBreakMultiplier
+    expect(withComma).toBeGreaterThan(withoutComma);
+
+    // The ratio is close to clauseBreakMultiplier, but not exact due to length factor differences
+    const ratio = withComma / withoutComma;
+    expect(ratio).toBeGreaterThan(1.4); // Should be at least somewhat longer
+  });
+
+  it("applies sentenceEndMultiplier greater than clauseBreakMultiplier", () => {
+    const withComma = calculateDuration("hello,", DEFAULT_TIMING_CONFIG, baseContext);
+    const withPeriod = calculateDuration("hello.", DEFAULT_TIMING_CONFIG, baseContext);
+
+    // Sentence end should be longer than comma
+    expect(withPeriod).toBeGreaterThan(withComma);
+
+    const commaRatio = DEFAULT_TIMING_CONFIG.clauseBreakMultiplier;
+    const periodRatio = DEFAULT_TIMING_CONFIG.sentenceEndMultiplier;
+    expect(periodRatio).toBeGreaterThan(commaRatio);
+  });
 });
