@@ -64,7 +64,7 @@ function App() {
       documentId,
       blocks: doc.blocks,
       slides,
-      mode: "document",
+      mode: "reading",
     });
   };
 
@@ -132,7 +132,7 @@ interface ReadingSessionProps {
 }
 
 function ReadingSession({ blocks, slides, mode, onModeChange }: ReadingSessionProps) {
-  const [startFromSlideIndex, setStartFromSlideIndex] = useState<number | null>(null);
+  const [startFromSlideIndex, setStartFromSlideIndex] = useState<number | null>(0);
   const [currentSlide, setCurrentSlide] = useState<Slide | null>(null);
 
   const handleStartFromWord = (slideIndex: number) => {
