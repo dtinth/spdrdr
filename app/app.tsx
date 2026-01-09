@@ -273,16 +273,14 @@ function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlide
       totalTime,
     }));
 
-    // If starting from a specific block, seek to that block
+    // If starting from a specific block, seek and play
     if (startFromBlockId) {
       const slideIndex = slides.findIndex(s => s.blockId === startFromBlockId);
       if (slideIndex >= 0) {
         player.seekToSlide(slideIndex);
       }
+      player.play();
     }
-
-    // Auto-start playing
-    player.play();
 
     // Cleanup
     return () => {
