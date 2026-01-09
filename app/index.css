@@ -2,9 +2,11 @@
   /* Colors */
   --bg-primary: #12140d;
   --bg-secondary: #1b1c15;
+  --bg-reading: #000000;
   --text-primary: #e3e3d7;
   --text-secondary: #c6c8b8;
   --text-muted: #909284;
+  --text-reading: #808080;
   --accent-primary: #bbcf82;
   --accent-hover: #a8bf60;
   --accent-orp: #ffb4ab;
@@ -127,7 +129,8 @@ body {
 
 /* Reading screen */
 .reading-screen {
-  background: var(--bg-primary);
+  background: var(--bg-reading);
+  color: var(--text-reading);
   flex-direction: column;
   padding: var(--spacing-xl);
 }
@@ -162,7 +165,7 @@ body {
 
 .word .before {
   flex: 4 0 0;
-  color: var(--text-secondary);
+  color: var(--text-reading);
   text-align: right;
 }
 
@@ -173,7 +176,7 @@ body {
 
 .word .after {
   flex: 6 0 0;
-  color: var(--text-secondary);
+  color: var(--text-reading);
   text-align: left;
 }
 
@@ -195,7 +198,7 @@ body {
 
 .btn-play {
   background: var(--accent-primary);
-  color: white;
+  color: #000000;
   min-width: 140px;
 }
 
@@ -250,7 +253,7 @@ body {
   display: flex;
   gap: var(--spacing-xl);
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
+  color: var(--text-reading);
   width: 100%;
   justify-content: space-between;
 }
@@ -258,7 +261,7 @@ body {
 .status {
   text-transform: capitalize;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-reading);
 }
 
 .document-view {
