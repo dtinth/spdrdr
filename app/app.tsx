@@ -301,12 +301,24 @@ function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlide
     });
 
     player.events.on("progress", ({ currentTime, totalTime }) => {
-      setState(prev => ({
-        ...prev,
-        currentTime,
-        totalTime,
-        progress: totalTime > 0 ? (currentTime / totalTime) * 100 : 0,
-      }));
+      setState(prev => {
+        // If we've moved past the current slide into a gap, clear it
+        if (prev.currentSlide && currentTime > prev.currentSlide.startTime + prev.currentSlide.duration) {
+          return {
+            ...prev,
+            currentTime,
+            totalTime,
+            progress: totalTime > 0 ? (currentTime / totalTime) * 100 : 0,
+            currentSlide: null,
+          };
+        }
+        return {
+          ...prev,
+          currentTime,
+          totalTime,
+          progress: totalTime > 0 ? (currentTime / totalTime) * 100 : 0,
+        };
+      });
     });
 
     playerRef.current = player;
