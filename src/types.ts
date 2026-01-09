@@ -56,4 +56,10 @@ export interface Slide {
 
   /** Whether this is the last word in the document */
   isDocumentEnd: boolean;
+
+  /** Start position of word in block text (0-indexed) */
+  startIndex: number;
+
+  /** End position of word in block text (exclusive) */
+  endIndex: number;
 }

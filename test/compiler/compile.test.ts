@@ -73,6 +73,90 @@ describe("compile", () => {
     });
   });
 
+  describe("text position tracking", () => {
+    it("tracks startIndex and endIndex for simple words", () => {
+      const doc = parsePlainText("Hello world");
+      const slides = compile(doc);
+
+      const block = doc.blocks[0];
+      expect(slides[0].startIndex).toBe(0);
+      expect(slides[0].endIndex).toBe(5);
+      expect(block.text.slice(slides[0].startIndex, slides[0].endIndex)).toBe(
+        "Hello"
+      );
+
+      expect(slides[1].startIndex).toBe(6);
+      expect(slides[1].endIndex).toBe(11);
+      expect(block.text.slice(slides[1].startIndex, slides[1].endIndex)).toBe(
+        "world"
+      );
+    });
+
+    it("tracks positions with punctuation", () => {
+      const doc = parsePlainText("Hello, world!");
+      const slides = compile(doc);
+
+      const block = doc.blocks[0];
+      expect(slides[0].word).toBe("Hello,");
+      expect(block.text.slice(slides[0].startIndex, slides[0].endIndex)).toBe(
+        "Hello,"
+      );
+
+      expect(slides[1].word).toBe("world!");
+      expect(block.text.slice(slides[1].startIndex, slides[1].endIndex)).toBe(
+        "world!"
+      );
+    });
+
+    it("tracks positions across multiple blocks", () => {
+      const doc = parsePlainText("First.\n\nSecond.");
+      const slides = compile(doc);
+
+      // Check first block
+      expect(doc.blocks[0].text.slice(
+        slides[0].startIndex,
+        slides[0].endIndex
+      )).toBe("First.");
+
+      // Check second block
+      expect(doc.blocks[1].text.slice(
+        slides[1].startIndex,
+        slides[1].endIndex
+      )).toBe("Second.");
+    });
+
+    it("all slides can reconstruct their text from block", () => {
+      const doc = parsePlainText("The quick brown fox jumps.");
+      const slides = compile(doc);
+
+      for (const slide of slides) {
+        const block = doc.blocks.find(b => b.id === slide.blockId);
+        expect(block).toBeDefined();
+        const reconstructed = block!.text.slice(
+          slide.startIndex,
+          slide.endIndex
+        );
+        expect(reconstructed).toBe(slide.word);
+      }
+    });
+
+    it("handles hyphenated words correctly", () => {
+      // "language" is 8 chars, will be hyphenated at some point
+      const doc = parsePlainText("The language specialization");
+      const slides = compile(doc);
+
+      for (const slide of slides) {
+        const block = doc.blocks[0];
+        const reconstructed = block.text.slice(
+          slide.startIndex,
+          slide.endIndex
+        );
+        // The reconstructed text should match the word without hyphen marker
+        expect(reconstructed).toBe(slide.word.replace(/-$/, ""));
+      }
+    });
+  });
+
   describe("block boundaries", () => {
     it("marks isBlockEnd correctly", () => {
       const doc = parsePlainText("First block.\n\nSecond block.");

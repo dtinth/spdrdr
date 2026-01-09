@@ -203,14 +203,12 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
         const elements: React.ReactNode[] = [];
 
         blockSlides.forEach((slide, slideNum) => {
-          // Find where this word appears in the block text
-          // (simple approach: search for the word)
-          const wordStart = block.text.indexOf(slide.word, textIndex);
-          if (wordStart > textIndex) {
+          // Use exact positions from slide to avoid issues with hyphenation
+          if (slide.startIndex > textIndex) {
             // Add non-clickable text before the word
             elements.push(
               <span key={`text-${slideNum}`}>
-                {block.text.slice(textIndex, wordStart)}
+                {block.text.slice(textIndex, slide.startIndex)}
               </span>
             );
           }
@@ -229,11 +227,11 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
                 onWordClick(slideIndex);
               }}
             >
-              {slide.word}
+              {block.text.slice(slide.startIndex, slide.endIndex)}
             </a>
           );
 
-          textIndex = wordStart + slide.word.length;
+          textIndex = slide.endIndex;
         });
 
         // Add remaining text after the last word

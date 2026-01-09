@@ -49,6 +49,8 @@ export function compile(
         wordIndex,
         isBlockEnd: isLastWordInBlock,
         isDocumentEnd: isLastWordInDocument,
+        startIndex: token.startIndex,
+        endIndex: token.endIndex,
       });
 
       cumulativeTime += duration;
