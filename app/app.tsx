@@ -4,7 +4,7 @@ import { parsePlainText } from "../src/parser/plaintext";
 import { compile } from "../src/compiler/compile";
 import { DEFAULT_TIMING_CONFIG, type TimingConfig } from "../src/timing/config";
 import { Player } from "../src/player";
-import type { Slide } from "../src/types";
+import type { Slide, Block } from "../src/types";
 
 // Web app timing config (640 WPM for RSVP)
 const WEB_TIMING_CONFIG: TimingConfig = {
@@ -32,6 +32,7 @@ function generateDocumentId(): string {
 interface AppState {
   phase: "paste" | "reading";
   documentId: string | null;
+  blocks: Block[] | null;
   slides: Slide[] | null;
   mode: "document" | "reading"; // Within reading phase: show document or reading screen
 }
@@ -40,6 +41,7 @@ function App() {
   const [state, setState] = useState<AppState>({
     phase: "paste",
     documentId: null,
+    blocks: null,
     slides: null,
     mode: "document",
   });
@@ -60,6 +62,7 @@ function App() {
     setState({
       phase: "reading",
       documentId,
+      blocks: doc.blocks,
       slides,
       mode: "document",
     });
@@ -88,10 +91,11 @@ function App() {
     loadDocument(text);
   };
 
-  if (state.phase === "reading" && state.documentId && state.slides) {
+  if (state.phase === "reading" && state.documentId && state.slides && state.blocks) {
     return (
       <ReadingSession
         key={state.documentId}
+        blocks={state.blocks}
         slides={state.slides}
         mode={state.mode}
         onModeChange={(mode) =>
@@ -121,12 +125,13 @@ function App() {
 }
 
 interface ReadingSessionProps {
+  blocks: Block[];
   slides: Slide[];
   mode: "document" | "reading";
   onModeChange: (mode: "document" | "reading") => void;
 }
 
-function ReadingSession({ slides, mode, onModeChange }: ReadingSessionProps) {
+function ReadingSession({ blocks, slides, mode, onModeChange }: ReadingSessionProps) {
   const [startFromBlockId, setStartFromBlockId] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState<Slide | null>(null);
 
@@ -143,6 +148,7 @@ function ReadingSession({ slides, mode, onModeChange }: ReadingSessionProps) {
     <>
       <div style={{ display: mode === "document" ? "block" : "none" }}>
         <DocumentView
+          blocks={blocks}
           slides={slides}
           currentSlide={mode === "document" ? currentSlide : null}
           onWordClick={handleStartFromBlock}
@@ -161,22 +167,23 @@ function ReadingSession({ slides, mode, onModeChange }: ReadingSessionProps) {
 }
 
 interface DocumentViewProps {
+  blocks: Block[];
   slides: Slide[];
   currentSlide: Slide | null;
   onWordClick: (blockId: string) => void;
 }
 
-function DocumentView({ slides, currentSlide, onWordClick }: DocumentViewProps) {
-  const currentWordRef = useRef<HTMLButtonElement>(null);
+function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentViewProps) {
+  const currentWordRef = useRef<HTMLAnchorElement>(null);
   const currentSlideIndex = currentSlide ? slides.indexOf(currentSlide) : -1;
 
   // Group slides by block
-  const blocks = new Map<string, Slide[]>();
+  const slidesByBlock = new Map<string, Slide[]>();
   for (const slide of slides) {
-    if (!blocks.has(slide.blockId)) {
-      blocks.set(slide.blockId, []);
+    if (!slidesByBlock.has(slide.blockId)) {
+      slidesByBlock.set(slide.blockId, []);
     }
-    blocks.get(slide.blockId)!.push(slide);
+    slidesByBlock.get(slide.blockId)!.push(slide);
   }
 
   // Scroll to current word when it changes
@@ -188,25 +195,62 @@ function DocumentView({ slides, currentSlide, onWordClick }: DocumentViewProps) 
 
   return (
     <div className="document-view">
-      {Array.from(blocks.entries()).map(([blockId, blockSlides]) => (
-        <div key={blockId} className="document-block">
-          {blockSlides.map((slide) => {
-            const slideIndex = slides.indexOf(slide);
-            const isCurrent = currentSlideIndex === slideIndex;
-            return (
-              <button
-                key={slideIndex}
-                ref={isCurrent ? currentWordRef : null}
-                className={`document-word ${isCurrent ? "document-word--current" : ""}`}
-                onClick={() => onWordClick(blockId)}
-                title={`Click to read from this block`}
-              >
-                {slide.word}
-              </button>
+      {blocks.map((block) => {
+        const blockSlides = slidesByBlock.get(block.id) || [];
+
+        // Render block text with clickable word portions
+        let textIndex = 0;
+        const elements: React.ReactNode[] = [];
+
+        blockSlides.forEach((slide, slideNum) => {
+          // Find where this word appears in the block text
+          // (simple approach: search for the word)
+          const wordStart = block.text.indexOf(slide.word, textIndex);
+          if (wordStart > textIndex) {
+            // Add non-clickable text before the word
+            elements.push(
+              <span key={`text-${slideNum}`}>
+                {block.text.slice(textIndex, wordStart)}
+              </span>
             );
-          })}
-        </div>
-      ))}
+          }
+
+          // Add the clickable word
+          const slideIndex = slides.indexOf(slide);
+          const isCurrent = currentSlideIndex === slideIndex;
+          elements.push(
+            <a
+              key={`word-${slideNum}`}
+              ref={isCurrent ? currentWordRef : null}
+              href="#"
+              className={`document-link ${isCurrent ? "document-link--current" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                onWordClick(block.id);
+              }}
+            >
+              {slide.word}
+            </a>
+          );
+
+          textIndex = wordStart + slide.word.length;
+        });
+
+        // Add remaining text after the last word
+        if (textIndex < block.text.length) {
+          elements.push(
+            <span key="text-end">
+              {block.text.slice(textIndex)}
+            </span>
+          );
+        }
+
+        return (
+          <p key={block.id} className="document-block">
+            {elements}
+          </p>
+        );
+      })}
     </div>
   );
 }
