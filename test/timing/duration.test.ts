@@ -48,6 +48,41 @@ describe("calculateMultipliers", () => {
       const m = calculateMultipliers("word-", DEFAULT_TIMING_CONFIG, baseContext);
       expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.clauseBreakMultiplier);
     });
+
+    it("returns sentenceEndMultiplier for period followed by double quote", () => {
+      const m = calculateMultipliers('word."', DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for period followed by single quote", () => {
+      const m = calculateMultipliers("word.'", DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for question mark followed by double quote", () => {
+      const m = calculateMultipliers('you?"', DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for exclamation followed by backtick", () => {
+      const m = calculateMultipliers("word!`", DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for period followed by curly double quote", () => {
+      const m = calculateMultipliers("word.\u201d", DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for period followed by curly single quote", () => {
+      const m = calculateMultipliers("word.\u2019", DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
+
+    it("returns sentenceEndMultiplier for question mark followed by curly double quote", () => {
+      const m = calculateMultipliers("you?\u201d", DEFAULT_TIMING_CONFIG, baseContext);
+      expect(m.punctuationMult).toBe(DEFAULT_TIMING_CONFIG.sentenceEndMultiplier);
+    });
   });
 
   describe("structure multipliers", () => {

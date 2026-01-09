@@ -41,7 +41,10 @@ export function calculateMultipliers(
 ): DurationMultipliers {
   // Punctuation category (largest wins)
   let punctuationMult = 1.0;
-  if (word.endsWith(".") || word.endsWith("!") || word.endsWith("?")) {
+
+  // Check for sentence end (. ! ?) optionally followed by quote marks (straight or curly)
+  // Curly quotes: \u201c ("), \u201d ("), \u2018 ('), \u2019 (')
+  if (/[.!?]["'`\u201c\u201d\u2018\u2019]?$/.test(word)) {
     punctuationMult = config.sentenceEndMultiplier;
   } else if (
     word.endsWith(",") ||
