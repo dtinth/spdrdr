@@ -36,6 +36,7 @@
   --font-size-lg: 1.2rem;
   --font-size-xl: 3rem;
   --font-size-2xl: 4rem;
+  --letter-spacing: 0.05ch;
 
   /* Transitions */
   --transition-fast: 0.1s;
@@ -78,7 +79,7 @@ body {
   font-size: var(--font-size-xl);
   margin-bottom: var(--spacing-lg);
   font-weight: 300;
-  letter-spacing: 0.05ch;
+  letter-spacing: var(--letter-spacing);
 }
 
 .paste-hint p {
@@ -149,7 +150,7 @@ body {
   height: 2em;
   font-size: var(--font-size-2xl);
   font-weight: 300;
-  letter-spacing: 0.05ch;
+  letter-spacing: var(--letter-spacing);
   line-height: 1.2;
 }
 
