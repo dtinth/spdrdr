@@ -33,6 +33,7 @@ interface AppState {
   phase: "paste" | "reading";
   documentId: string | null;
   slides: Slide[] | null;
+  mode: "document" | "reading"; // Within reading phase: show document or reading screen
 }
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
     phase: "paste",
     documentId: null,
     slides: null,
+    mode: "document",
   });
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -59,6 +61,7 @@ function App() {
       phase: "reading",
       documentId,
       slides,
+      mode: "document",
     });
   };
 
@@ -86,7 +89,16 @@ function App() {
   };
 
   if (state.phase === "reading" && state.documentId && state.slides) {
-    return <ReadingScreen key={state.documentId} slides={state.slides} />;
+    return (
+      <ReadingSession
+        key={state.documentId}
+        slides={state.slides}
+        mode={state.mode}
+        onModeChange={(mode) =>
+          setState(prev => ({ ...prev, mode }))
+        }
+      />
+    );
   }
 
   return (
@@ -108,8 +120,102 @@ function App() {
   );
 }
 
+interface ReadingSessionProps {
+  slides: Slide[];
+  mode: "document" | "reading";
+  onModeChange: (mode: "document" | "reading") => void;
+}
+
+function ReadingSession({ slides, mode, onModeChange }: ReadingSessionProps) {
+  const [startFromBlockId, setStartFromBlockId] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState<Slide | null>(null);
+
+  const handleStartFromBlock = (blockId: string) => {
+    setStartFromBlockId(blockId);
+    onModeChange("reading");
+  };
+
+  const handleStopReading = () => {
+    onModeChange("document");
+  };
+
+  return (
+    <>
+      <div style={{ display: mode === "document" ? "block" : "none" }}>
+        <DocumentView
+          slides={slides}
+          currentSlide={mode === "document" ? currentSlide : null}
+          onWordClick={handleStartFromBlock}
+        />
+      </div>
+      <div style={{ display: mode === "reading" ? "block" : "none" }}>
+        <ReadingScreen
+          slides={slides}
+          startFromBlockId={startFromBlockId}
+          onStopReading={handleStopReading}
+          onCurrentSlideChange={setCurrentSlide}
+        />
+      </div>
+    </>
+  );
+}
+
+interface DocumentViewProps {
+  slides: Slide[];
+  currentSlide: Slide | null;
+  onWordClick: (blockId: string) => void;
+}
+
+function DocumentView({ slides, currentSlide, onWordClick }: DocumentViewProps) {
+  const currentWordRef = useRef<HTMLButtonElement>(null);
+  const currentSlideIndex = currentSlide ? slides.indexOf(currentSlide) : -1;
+
+  // Group slides by block
+  const blocks = new Map<string, Slide[]>();
+  for (const slide of slides) {
+    if (!blocks.has(slide.blockId)) {
+      blocks.set(slide.blockId, []);
+    }
+    blocks.get(slide.blockId)!.push(slide);
+  }
+
+  // Scroll to current word when it changes
+  useEffect(() => {
+    if (currentWordRef.current) {
+      currentWordRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [currentSlide]);
+
+  return (
+    <div className="document-view">
+      {Array.from(blocks.entries()).map(([blockId, blockSlides]) => (
+        <div key={blockId} className="document-block">
+          {blockSlides.map((slide) => {
+            const slideIndex = slides.indexOf(slide);
+            const isCurrent = currentSlideIndex === slideIndex;
+            return (
+              <button
+                key={slideIndex}
+                ref={isCurrent ? currentWordRef : null}
+                className={`document-word ${isCurrent ? "document-word--current" : ""}`}
+                onClick={() => onWordClick(blockId)}
+                title={`Click to read from this block`}
+              >
+                {slide.word}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface ReadingScreenProps {
   slides: Slide[];
+  startFromBlockId: string | null;
+  onStopReading: () => void;
+  onCurrentSlideChange: (slide: Slide | null) => void;
 }
 
 interface ReadingScreenState {
@@ -120,7 +226,7 @@ interface ReadingScreenState {
   progress: number;
 }
 
-function ReadingScreen({ slides }: ReadingScreenProps) {
+function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlideChange }: ReadingScreenProps) {
   const [state, setState] = useState<ReadingScreenState>({
     currentSlide: slides[0] || null,
     currentTime: 0,
@@ -140,6 +246,7 @@ function ReadingScreen({ slides }: ReadingScreenProps) {
         ...prev,
         currentSlide: slide,
       }));
+      onCurrentSlideChange(slide);
     });
 
     player.events.on("statusChange", ({ status }) => {
@@ -166,6 +273,14 @@ function ReadingScreen({ slides }: ReadingScreenProps) {
       totalTime,
     }));
 
+    // If starting from a specific block, seek to that block
+    if (startFromBlockId) {
+      const slideIndex = slides.findIndex(s => s.blockId === startFromBlockId);
+      if (slideIndex >= 0) {
+        player.seekToSlide(slideIndex);
+      }
+    }
+
     // Auto-start playing
     player.play();
 
@@ -175,7 +290,7 @@ function ReadingScreen({ slides }: ReadingScreenProps) {
         playerRef.current.stop();
       }
     };
-  }, [slides]);
+  }, [slides, startFromBlockId]);
 
   const handlePlayPause = () => {
     if (playerRef.current) {
@@ -192,6 +307,7 @@ function ReadingScreen({ slides }: ReadingScreenProps) {
         progress: 0,
         currentTime: 0,
       }));
+      onStopReading();
     }
   };
 

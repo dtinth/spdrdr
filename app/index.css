@@ -261,6 +261,53 @@ body {
   color: var(--text-secondary);
 }
 
+.document-view {
+  width: 100%;
+  height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  font-size: var(--font-size-base);
+  line-height: 1.8;
+}
+
+.document-block {
+  margin-bottom: var(--spacing-3xl);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.document-word {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  transition: color var(--transition-base);
+}
+
+.document-word:hover {
+  color: var(--accent-primary);
+}
+
+.document-word:active {
+  color: var(--accent-hover);
+}
+
+.document-word--current {
+  background: var(--accent-primary);
+  color: #283500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
 @media (max-width: 600px) {
   .word {
     font-size: 2.5rem;
@@ -280,5 +327,9 @@ body {
 
   .btn {
     flex: 1;
+  }
+
+  .document-view {
+    padding: var(--spacing-lg);
   }
 }
