@@ -132,11 +132,11 @@ interface ReadingSessionProps {
 }
 
 function ReadingSession({ blocks, slides, mode, onModeChange }: ReadingSessionProps) {
-  const [startFromBlockId, setStartFromBlockId] = useState<string | null>(null);
+  const [startFromSlideIndex, setStartFromSlideIndex] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState<Slide | null>(null);
 
-  const handleStartFromBlock = (blockId: string) => {
-    setStartFromBlockId(blockId);
+  const handleStartFromWord = (slideIndex: number) => {
+    setStartFromSlideIndex(slideIndex);
     onModeChange("reading");
   };
 
@@ -151,13 +151,13 @@ function ReadingSession({ blocks, slides, mode, onModeChange }: ReadingSessionPr
           blocks={blocks}
           slides={slides}
           currentSlide={mode === "document" ? currentSlide : null}
-          onWordClick={handleStartFromBlock}
+          onWordClick={handleStartFromWord}
         />
       </div>
       <div style={{ display: mode === "reading" ? "block" : "none" }}>
         <ReadingScreen
           slides={slides}
-          startFromBlockId={startFromBlockId}
+          startFromSlideIndex={startFromSlideIndex}
           onStopReading={handleStopReading}
           onCurrentSlideChange={setCurrentSlide}
         />
@@ -170,7 +170,7 @@ interface DocumentViewProps {
   blocks: Block[];
   slides: Slide[];
   currentSlide: Slide | null;
-  onWordClick: (blockId: string) => void;
+  onWordClick: (slideIndex: number) => void;
 }
 
 function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentViewProps) {
@@ -226,7 +226,7 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
               className={`document-link ${isCurrent ? "document-link--current" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
-                onWordClick(block.id);
+                onWordClick(slideIndex);
               }}
             >
               {slide.word}
@@ -257,7 +257,7 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
 
 interface ReadingScreenProps {
   slides: Slide[];
-  startFromBlockId: string | null;
+  startFromSlideIndex: number | null;
   onStopReading: () => void;
   onCurrentSlideChange: (slide: Slide | null) => void;
 }
@@ -270,7 +270,7 @@ interface ReadingScreenState {
   progress: number;
 }
 
-function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlideChange }: ReadingScreenProps) {
+function ReadingScreen({ slides, startFromSlideIndex, onStopReading, onCurrentSlideChange }: ReadingScreenProps) {
   const [state, setState] = useState<ReadingScreenState>({
     currentSlide: slides[0] || null,
     currentTime: 0,
@@ -329,12 +329,9 @@ function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlide
       totalTime,
     }));
 
-    // If starting from a specific block, seek and play
-    if (startFromBlockId) {
-      const slideIndex = slides.findIndex(s => s.blockId === startFromBlockId);
-      if (slideIndex >= 0) {
-        player.seekToSlide(slideIndex);
-      }
+    // If starting from a specific slide, seek and play
+    if (startFromSlideIndex !== null && startFromSlideIndex >= 0) {
+      player.seekToSlide(startFromSlideIndex);
       player.play();
     }
 
@@ -344,7 +341,7 @@ function ReadingScreen({ slides, startFromBlockId, onStopReading, onCurrentSlide
         playerRef.current.stop();
       }
     };
-  }, [slides, startFromBlockId]);
+  }, [slides, startFromSlideIndex]);
 
   const handlePlayPause = () => {
     if (playerRef.current) {
