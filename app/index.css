@@ -147,15 +147,15 @@ body {
   width: 100%;
   overflow: hidden;
   height: 2em;
+  font-size: var(--font-size-2xl);
+  font-weight: 300;
+  letter-spacing: 2px;
+  line-height: 1.2;
 }
 
 .word {
   display: flex;
   width: 100%;
-  font-size: var(--font-size-2xl);
-  font-weight: 300;
-  letter-spacing: 2px;
-  line-height: 1.2;
   align-items: center;
 }
 
