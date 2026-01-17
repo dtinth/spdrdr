@@ -82,8 +82,10 @@ function App() {
       if (clipboardData.types.includes("text/html")) {
         text = clipboardData.getData("text/html");
         isHtml = true;
+        console.log("📋 Pasted HTML markup:", text);
       } else if (clipboardData.types.includes("text/plain")) {
         text = clipboardData.getData("text/plain");
+        console.log("📝 Pasted plaintext:", text.slice(0, 200));
       }
 
       if (!text) return;

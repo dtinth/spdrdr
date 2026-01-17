@@ -46,8 +46,8 @@ describe("parseHtml", () => {
       expect(doc.blocks[1].text).toBe("Second paragraph.");
     });
 
-    it("treats div as paragraph", () => {
-      const doc = parseHtml("<div>Content in div</div>");
+    it("treats p inside div as paragraph", () => {
+      const doc = parseHtml("<div><p>Content in div</p></div>");
       expect(doc.blocks).toHaveLength(1);
       expect(doc.blocks[0].type).toBe("paragraph");
       expect(doc.blocks[0].text).toBe("Content in div");
@@ -212,6 +212,135 @@ describe("parseHtml", () => {
       const doc = parseHtml("<p>&lt;tag&gt; &amp; special</p>");
       expect(doc.blocks[0].text).toContain("<tag>");
       expect(doc.blocks[0].text).toContain("&");
+    });
+  });
+
+  describe("list handling", () => {
+    it("converts ul>li to bullet list items", () => {
+      const html = `<ul><li>First item</li><li>Second item</li></ul>`;
+      const doc = parseHtml(html);
+      expect(doc.blocks).toHaveLength(2);
+      expect(doc.blocks[0].type).toBe("paragraph");
+      expect(doc.blocks[0].text).toBe("• First item");
+      expect(doc.blocks[1].text).toBe("• Second item");
+    });
+
+    it("converts ol>li to numbered list items", () => {
+      const html = `<ol><li>First item</li><li>Second item</li><li>Third item</li></ol>`;
+      const doc = parseHtml(html);
+      expect(doc.blocks).toHaveLength(3);
+      expect(doc.blocks[0].text).toBe("1. First item");
+      expect(doc.blocks[1].text).toBe("2. Second item");
+      expect(doc.blocks[2].text).toBe("3. Third item");
+    });
+
+    it("handles nested lists", () => {
+      const html = `<ul><li>Item 1</li><li>Item 2<ul><li>Nested 2.1</li></ul></li></ul>`;
+      const doc = parseHtml(html);
+
+      // Should have bullets for all list items
+      const bulletItems = doc.blocks.filter(b => b.text.startsWith("•"));
+      expect(bulletItems.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("handles mixed nested lists (ul in ol)", () => {
+      const html = `<ol><li>First<ul><li>Sub 1</li></ul></li><li>Second</li></ol>`;
+      const doc = parseHtml(html);
+
+      // At least one numbered and one bulleted item
+      const numbered = doc.blocks.some(b => /^\d+\./.test(b.text));
+      const bulleted = doc.blocks.some(b => b.text.startsWith("•"));
+      expect(numbered).toBe(true);
+      expect(bulleted).toBe(true);
+    });
+
+    it("handles list with inline formatting", () => {
+      const html = `<ul><li>Item with <strong>bold</strong> text</li></ul>`;
+      const doc = parseHtml(html);
+      expect(doc.blocks[0].text).toBe("• Item with bold text");
+    });
+
+    it("handles empty list items", () => {
+      const html = `<ul><li></li><li>Real item</li></ul>`;
+      const doc = parseHtml(html);
+
+      // Empty items should be skipped
+      const realItems = doc.blocks.filter(b => b.text.length > 0);
+      expect(realItems.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("handles list followed by paragraph", () => {
+      const html = `<ul><li>Item 1</li><li>Item 2</li></ul><p>After list</p>`;
+      const doc = parseHtml(html);
+
+      const listItems = doc.blocks.filter(b => b.text.startsWith("•"));
+      const paragraphs = doc.blocks.filter(b => !b.text.startsWith("•") && !/^\d+\./.test(b.text));
+
+      expect(listItems.length).toBe(2);
+      expect(paragraphs.some(p => p.text === "After list")).toBe(true);
+    });
+  });
+
+  describe("realistic HTML structures", () => {
+    it("parses article with headings and lists", () => {
+      const html = `
+        <article>
+          <h1>Shopping List</h1>
+          <p>Here are the items we need:</p>
+          <ul>
+            <li>Milk</li>
+            <li>Eggs</li>
+            <li>Bread</li>
+          </ul>
+          <h2>Notes</h2>
+          <p>Buy organic if possible.</p>
+        </article>
+      `;
+      const doc = parseHtml(html);
+
+      // Verify we have separate blocks for heading, paragraph, list items, and more content
+      expect(doc.blocks.length).toBeGreaterThanOrEqual(7); // h1, p, 3 li, h2, p
+
+      // Check specific blocks
+      const h1 = doc.blocks.find(b => b.type === "heading" && b.level === 1);
+      const h2 = doc.blocks.find(b => b.type === "heading" && b.level === 2);
+      const listItems = doc.blocks.filter(b => b.text.startsWith("•"));
+      const paragraphs = doc.blocks.filter(b => b.type === "paragraph" && !b.text.startsWith("•"));
+
+      expect(h1?.text).toBe("Shopping List");
+      expect(h2?.text).toBe("Notes");
+      expect(listItems.length).toBe(3);
+      expect(listItems[0].text).toBe("• Milk");
+      expect(paragraphs.some(p => p.text === "Here are the items we need:")).toBe(true);
+      expect(paragraphs.some(p => p.text === "Buy organic if possible.")).toBe(true);
+    });
+
+    it("parses div with mixed content", () => {
+      const html = `
+        <div>
+          <h2>Instructions</h2>
+          <ol>
+            <li>Preheat oven</li>
+            <li>Mix ingredients</li>
+            <li>Bake</li>
+          </ol>
+          <p>Enjoy!</p>
+        </div>
+      `;
+      const doc = parseHtml(html);
+
+      // Should have heading, 3 numbered items, and paragraph
+      expect(doc.blocks.length).toBeGreaterThanOrEqual(5);
+
+      const heading = doc.blocks.find(b => b.type === "heading");
+      const numberedItems = doc.blocks.filter(b => /^\d+\./.test(b.text));
+      const finalPara = doc.blocks.find(b => b.text === "Enjoy!");
+
+      expect(heading?.text).toBe("Instructions");
+      expect(numberedItems.length).toBe(3);
+      expect(numberedItems[0].text).toBe("1. Preheat oven");
+      expect(numberedItems[2].text).toBe("3. Bake");
+      expect(finalPara).toBeDefined();
     });
   });
 
