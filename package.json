@@ -33,5 +33,11 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "^5"
+  },
+  "dependencies": {
+    "hast-util-select": "^6.0.4",
+    "hast-util-to-text": "^4.0.2",
+    "rehype-parse": "^9.0.1",
+    "unified": "^11.0.5"
   }
 }

@@ -37,7 +37,7 @@ export interface TimingConfig {
 export const DEFAULT_TIMING_CONFIG: TimingConfig = {
   wpm: 300,
   sentenceEndMultiplier: 2.5,
-  clauseBreakMultiplier: 1.5,
+  clauseBreakMultiplier: 2.0,
   paragraphEndMultiplier: 2.5,
   shortWordMultiplier: 1.3,
   longWordMultiplier: 1.4,
