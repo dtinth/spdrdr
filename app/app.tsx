@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom/client";
 import { parsePlainText } from "../src/parser/plaintext";
+import { parseHtml } from "../src/parser/html";
 import { compile } from "../src/compiler/compile";
 import { DEFAULT_TIMING_CONFIG, type TimingConfig } from "../src/timing/config";
 import { Player } from "../src/player";
-import type { Slide, Block } from "../src/types";
+import type { Slide, Block, Document } from "../src/types";
 
 // Web app timing config (640 WPM for RSVP)
 const WEB_TIMING_CONFIG: TimingConfig = {
@@ -48,8 +49,8 @@ function App() {
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const loadDocument = (text: string) => {
-    const doc = parsePlainText(text);
+  const loadDocument = (text: string, isHtml: boolean = false) => {
+    const doc = isHtml ? parseHtml(text) : parsePlainText(text);
     const slides = compile(doc, WEB_TIMING_CONFIG);
 
     if (slides.length === 0) {
@@ -71,11 +72,24 @@ function App() {
   // Handle global paste event
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      const text = e.clipboardData?.getData("text");
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+
+      // Check if HTML is available, prefer it over plain text
+      let text: string | null = null;
+      let isHtml = false;
+
+      if (clipboardData.types.includes("text/html")) {
+        text = clipboardData.getData("text/html");
+        isHtml = true;
+      } else if (clipboardData.types.includes("text/plain")) {
+        text = clipboardData.getData("text/plain");
+      }
+
       if (!text) return;
 
       e.preventDefault();
-      loadDocument(text);
+      loadDocument(text, isHtml);
     };
 
     window.addEventListener("paste", handlePaste);
@@ -156,6 +170,7 @@ function ReadingSession({ blocks, slides, mode, onModeChange }: ReadingSessionPr
       </div>
       <div style={{ display: mode === "reading" ? "block" : "none" }}>
         <ReadingScreen
+          blocks={blocks}
           slides={slides}
           startFromSlideIndex={startFromSlideIndex}
           onStopReading={handleStopReading}
@@ -243,10 +258,13 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
           );
         }
 
-        return (
-          <p key={block.id} className="document-block">
-            {elements}
-          </p>
+        // Render headings as h1-h6, paragraphs as p
+        const HeadingTag = block.type === "heading" ? (`h${block.level}` as const) : "p";
+
+        return React.createElement(
+          HeadingTag,
+          { key: block.id, className: "document-block" },
+          elements
         );
       })}
     </div>
@@ -254,6 +272,7 @@ function DocumentView({ blocks, slides, currentSlide, onWordClick }: DocumentVie
 }
 
 interface ReadingScreenProps {
+  blocks: Block[];
   slides: Slide[];
   startFromSlideIndex: number | null;
   onStopReading: () => void;
@@ -268,7 +287,7 @@ interface ReadingScreenState {
   progress: number;
 }
 
-function ReadingScreen({ slides, startFromSlideIndex, onStopReading, onCurrentSlideChange }: ReadingScreenProps) {
+function ReadingScreen({ blocks, slides, startFromSlideIndex, onStopReading, onCurrentSlideChange }: ReadingScreenProps) {
   const [state, setState] = useState<ReadingScreenState>({
     currentSlide: slides[0] || null,
     currentTime: 0,
@@ -378,6 +397,8 @@ function ReadingScreen({ slides, startFromSlideIndex, onStopReading, onCurrentSl
             <Word
               word={state.currentSlide.word}
               pivotIndex={state.currentSlide.pivotIndex}
+              blocks={blocks}
+              currentSlide={state.currentSlide}
             />
           )}
         </div>
@@ -410,13 +431,17 @@ function ReadingScreen({ slides, startFromSlideIndex, onStopReading, onCurrentSl
   );
 }
 
-function Word({ word, pivotIndex }: { word: string; pivotIndex: number }) {
+function Word({ word, pivotIndex, blocks, currentSlide }: { word: string; pivotIndex: number; blocks: Block[]; currentSlide: Slide }) {
   const before = word.slice(0, pivotIndex);
   const orp = word[pivotIndex] || " ";
   const after = word.slice(pivotIndex + 1);
 
+  // Check if current slide's block is a heading
+  const currentBlock = blocks.find(b => b.id === currentSlide.blockId);
+  const isHeading = currentBlock?.type === "heading";
+
   return (
-    <div className="word">
+    <div className="word" style={{ fontWeight: isHeading ? 700 : 400 }}>
       <span className="before">{before}</span>
       <span className="orp">{orp}</span>
       <span className="after">{after}</span>

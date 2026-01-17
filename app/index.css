@@ -295,6 +295,42 @@ body {
   margin-bottom: var(--spacing-3xl);
 }
 
+/* Heading styles in document view */
+h1.document-block {
+  font-size: 2.2rem;
+  font-weight: 400;
+  margin-bottom: var(--spacing-4xl);
+  color: var(--accent-primary);
+  letter-spacing: -0.02em;
+}
+
+h2.document-block {
+  font-size: 1.8rem;
+  font-weight: 400;
+  margin-bottom: var(--spacing-3xl);
+  color: var(--accent-primary);
+  margin-top: var(--spacing-4xl);
+  letter-spacing: -0.01em;
+}
+
+h3.document-block {
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-2xl);
+  color: var(--accent-primary);
+  margin-top: var(--spacing-3xl);
+}
+
+h4.document-block,
+h5.document-block,
+h6.document-block {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-2xl);
+  color: var(--accent-primary);
+  margin-top: var(--spacing-2xl);
+}
+
 .document-link {
   color: inherit;
   text-decoration: none;
