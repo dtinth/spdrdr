@@ -193,6 +193,53 @@ describe("tokenize", () => {
     });
   });
 
+  describe("em-dash tokenization", () => {
+    it("treats em-dash as its own token", () => {
+      const tokens = tokenize("some text—wait—some more text");
+      expect(tokens).toHaveLength(8);
+      expect(tokens[0].word).toBe("some");
+      expect(tokens[1].word).toBe("text");
+      expect(tokens[2].word).toBe("—");
+      expect(tokens[3].word).toBe("wait");
+      expect(tokens[4].word).toBe("—");
+      expect(tokens[5].word).toBe("some");
+      expect(tokens[6].word).toBe("more");
+      expect(tokens[7].word).toBe("text");
+    });
+
+    it("treats -- as em-dash", () => {
+      const tokens = tokenize("hello -- world");
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0].word).toBe("hello");
+      expect(tokens[1].word).toBe("--");
+      expect(tokens[2].word).toBe("world");
+    });
+
+    it("treats --- as em-dash", () => {
+      const tokens = tokenize("hello --- world");
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0].word).toBe("hello");
+      expect(tokens[1].word).toBe("---");
+      expect(tokens[2].word).toBe("world");
+    });
+
+    it("handles multiple consecutive em-dashes", () => {
+      const tokens = tokenize("text——more");
+      expect(tokens.length).toBeGreaterThanOrEqual(3);
+      expect(tokens.some(t => t.word === "—")).toBe(true);
+    });
+
+    it("preserves em-dash position tracking", () => {
+      const text = "some text—wait";
+      const tokens = tokenize(text);
+
+      // Find em-dash token
+      const dashToken = tokens.find(t => t.word === "—");
+      expect(dashToken).toBeDefined();
+      expect(text.slice(dashToken!.startIndex, dashToken!.endIndex)).toBe("—");
+    });
+  });
+
   describe("integration tests", () => {
     it("tokenizes complex text", () => {
       const text = "The quick brown fox jumps over the lazy dog.";

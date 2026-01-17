@@ -24,6 +24,7 @@ export interface TokenizeOptions {
  *
  * Rules:
  * - Split on whitespace
+ * - Em-dashes (—, --, ---) are separate tokens
  * - Preserve punctuation attached to words (e.g., "hello," stays as one token)
  * - Apply hyphenation to words exceeding maxWordLength
  *
@@ -47,9 +48,29 @@ export function tokenize(
       continue;
     }
 
-    // Find end of word (next whitespace or slash)
+    // Check for em-dashes (—, ---, or --)
+    const emDashMatch = text.slice(currentIndex).match(/^(—|---|--)/);
+    if (emDashMatch) {
+      const dashToken = emDashMatch[1];
+      tokens.push({
+        word: dashToken,
+        startIndex: currentIndex,
+        endIndex: currentIndex + dashToken.length,
+      });
+      currentIndex += dashToken.length;
+      continue;
+    }
+
+    // Find end of word (next whitespace, slash, or em-dash)
     let wordEnd = currentIndex;
-    while (wordEnd < text.length && !/[\s/]/.test(text[wordEnd])) {
+    while (wordEnd < text.length) {
+      // Stop at whitespace
+      if (/\s/.test(text[wordEnd])) break;
+      // Stop at slash
+      if (text[wordEnd] === "/") break;
+      // Stop at em-dash (—, ---, or --)
+      const remaining = text.slice(wordEnd);
+      if (remaining.match(/^(—|---|--)/)) break;
       wordEnd++;
     }
 
