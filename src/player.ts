@@ -19,6 +19,8 @@ export interface PlayerEvents {
   statusChange: { status: PlayerState["status"] };
   progress: { currentTime: number; totalTime: number };
   complete: void;
+  [key: string]: unknown;
+  [key: symbol]: unknown;
 }
 
 export interface TimerApi {
@@ -70,6 +72,7 @@ export class Player {
       return 0;
     }
     const lastSlide = this.slides[this.slides.length - 1];
+    if (!lastSlide) throw new Error("Last slide is undefined");
     return lastSlide.startTime + lastSlide.duration;
   }
 
@@ -92,6 +95,7 @@ export class Player {
   private findSlideIndexAtTime(time: number): number {
     for (let i = 0; i < this.slides.length; i++) {
       const slide = this.slides[i];
+      if (!slide) throw new Error(`Slide at index ${i} is undefined`);
       const slideEndTime = slide.startTime + slide.duration;
       if (time >= slide.startTime && time < slideEndTime) {
         return i;
@@ -126,6 +130,7 @@ export class Player {
     const slideIndex = this.findSlideIndexAtTime(this.state.currentTime);
     if (slideIndex >= 0) {
       const slide = this.slides[slideIndex];
+      if (!slide) throw new Error(`Slide at index ${slideIndex} is undefined`);
 
       // Check for block change
       if (slide.blockId !== this.lastBlockId) {
@@ -263,6 +268,7 @@ export class Player {
     const slideIndex = this.findSlideIndexAtTime(this.state.currentTime);
     if (slideIndex >= 0) {
       const slide = this.slides[slideIndex];
+      if (!slide) throw new Error(`Slide at index ${slideIndex} is undefined`);
       this.lastBlockId = slide.blockId;
     }
 

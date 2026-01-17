@@ -16,7 +16,7 @@ const { values } = parseArgs({
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
 
-  for await (const chunk of Bun.stdin.stream()) {
+  for await (const chunk of Bun.stdin.stream() as unknown as AsyncIterable<Buffer>) {
     chunks.push(chunk);
   }
 
@@ -67,6 +67,7 @@ async function playSlides(
 ): Promise<void> {
   for (let i = startIndex; i < slides.length; i++) {
     const slide = slides[i];
+    if (!slide) throw new Error(`Slide at index ${i} is undefined`);
 
     displayWord(slide.word, slide.pivotIndex);
 

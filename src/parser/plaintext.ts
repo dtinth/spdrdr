@@ -19,6 +19,7 @@ export function parsePlainText(input: string): Document {
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex];
+    if (line === undefined) throw new Error(`Line at index ${lineIndex} is undefined`);
     const isEmptyLine = line.trim().length === 0;
 
     if (isEmptyLine) {

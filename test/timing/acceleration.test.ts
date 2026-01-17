@@ -79,7 +79,7 @@ describe("Acceleration Curve", () => {
       const positions = times.map(t => getPlaybackPosition(t));
 
       for (let i = 1; i < positions.length; i++) {
-        expect(positions[i]).toBeGreaterThanOrEqual(positions[i - 1]);
+        expect(positions[i]!).toBeGreaterThanOrEqual(positions[i - 1]!);
       }
     });
 

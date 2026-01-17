@@ -1,4 +1,4 @@
-import { TimingConfig } from "./config";
+import type { TimingConfig } from "./config";
 
 export interface DurationContext {
   /** Is this the last word in a block? */

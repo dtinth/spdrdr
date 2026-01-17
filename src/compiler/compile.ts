@@ -26,11 +26,13 @@ export function compile(
 
   for (let blockIndex = 0; blockIndex < document.blocks.length; blockIndex++) {
     const block = document.blocks[blockIndex];
+    if (!block) throw new Error(`Block at index ${blockIndex} is undefined`);
     const tokens = tokenize(block.text);
     const isLastBlock = blockIndex === document.blocks.length - 1;
 
     for (let wordIndex = 0; wordIndex < tokens.length; wordIndex++) {
       const token = tokens[wordIndex];
+      if (!token) throw new Error(`Token at index ${wordIndex} is undefined`);
       const isLastWordInBlock = wordIndex === tokens.length - 1;
       const isLastWordInDocument = isLastBlock && isLastWordInBlock;
 

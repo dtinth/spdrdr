@@ -21,6 +21,8 @@ const mockSlides: Slide[] = [
     wordIndex: 0,
     isBlockEnd: false,
     isDocumentEnd: false,
+    startIndex: 0,
+    endIndex: 5,
   },
   {
     word: "world",
@@ -31,6 +33,8 @@ const mockSlides: Slide[] = [
     wordIndex: 1,
     isBlockEnd: true,
     isDocumentEnd: false,
+    startIndex: 6,
+    endIndex: 11,
   },
   {
     word: "Goodbye",
@@ -41,6 +45,8 @@ const mockSlides: Slide[] = [
     wordIndex: 0,
     isBlockEnd: true,
     isDocumentEnd: true,
+    startIndex: 0,
+    endIndex: 7,
   },
 ];
 
@@ -86,7 +92,7 @@ describe("Player", () => {
       const state = player.getState();
 
       expect(state.status).toBe("playing");
-      expect(emittedStatus).toBe("playing");
+      expect(emittedStatus as unknown as string).toBe("playing");
     });
 
     it("emits first slide on play", () => {
@@ -100,7 +106,7 @@ describe("Player", () => {
       // Advance time for animation frame
       jest.advanceTimersByTime(50);
 
-      expect(emittedSlide).toBe(mockSlides[0]);
+      expect(emittedSlide as unknown as Slide).toBe(mockSlides[0]!);
     });
 
     it("pauses playback", () => {
@@ -114,7 +120,7 @@ describe("Player", () => {
 
       const state = player.getState();
       expect(state.status).toBe("paused");
-      expect(emittedStatus).toBe("paused");
+      expect(emittedStatus as unknown as string).toBe("paused");
     });
 
     it("ignores play when already playing", () => {
@@ -175,8 +181,8 @@ describe("Player", () => {
       player.play();
       player.stop();
 
-      expect(emittedStatus).toBe("idle");
-      expect(emittedProgress?.currentTime).toBe(0);
+      expect(emittedStatus as unknown as string).toBe("idle");
+      expect((emittedProgress as any)?.currentTime).toBe(0);
     });
   });
 
@@ -206,8 +212,8 @@ describe("Player", () => {
 
       player.seekToTime(200);
 
-      expect(emittedProgress?.currentTime).toBe(200);
-      expect(emittedProgress?.totalTime).toBe(400);
+      expect((emittedProgress as any)?.currentTime).toBe(200);
+      expect((emittedProgress as any)?.totalTime).toBe(400);
     });
 
     it("maintains playing state on seek", () => {
@@ -233,19 +239,19 @@ describe("Player", () => {
   describe("seekToSlide", () => {
     it("seeks to slide by index", () => {
       player.seekToSlide(2);
-      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
+      expect(player.getState().currentTime).toBe(mockSlides[2]!.startTime);
     });
 
     it("clamps slide seek to valid range", () => {
       player.seekToSlide(100);
-      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
+      expect(player.getState().currentTime).toBe(mockSlides[2]!.startTime);
     });
   });
 
   describe("seekToBlock", () => {
     it("seeks to block by ID", () => {
       player.seekToBlock("2");
-      expect(player.getState().currentTime).toBe(mockSlides[2].startTime);
+      expect(player.getState().currentTime).toBe(mockSlides[2]!.startTime);
     });
 
     it("does nothing if block not found", () => {
@@ -312,7 +318,7 @@ describe("Player", () => {
       player.play();
       jest.advanceTimersByTime(1100);
 
-      expect(finalStatus).toBe("complete");
+      expect(finalStatus as unknown as string).toBe("complete");
     });
 
     it("resets to start on play after complete", () => {
@@ -334,7 +340,7 @@ describe("Player", () => {
     });
 
     it("handles single slide", () => {
-      const singleSlidePlayer = new Player([mockSlides[0]], undefined, createTestTimerApi());
+      const singleSlidePlayer = new Player([mockSlides[0]!], undefined, createTestTimerApi());
 
       let completeEmitted = false;
       singleSlidePlayer.events.on("complete", () => {
@@ -414,10 +420,10 @@ describe("Player", () => {
 
       player.seekToTime(200);
 
-      expect(progressData?.currentTime).toBe(200);
-      expect(progressData?.totalTime).toBe(400);
-      expect(typeof progressData?.currentTime).toBe("number");
-      expect(typeof progressData?.totalTime).toBe("number");
+      expect((progressData as any)?.currentTime).toBe(200);
+      expect((progressData as any)?.totalTime).toBe(400);
+      expect(typeof (progressData as any)?.currentTime).toBe("number");
+      expect(typeof (progressData as any)?.totalTime).toBe("number");
     });
   });
 });

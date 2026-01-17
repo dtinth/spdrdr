@@ -10,8 +10,7 @@ describe("compile", () => {
       const slides = compile(doc);
 
       expect(slides).toHaveLength(2);
-      expect(slides[0].word).toBe("Hello");
-      expect(slides[1].word).toBe("world.");
+      expect(slides.map(s => s.word)).toEqual(["Hello", "world."]);
     });
 
     it("handles empty document", () => {
@@ -26,7 +25,7 @@ describe("compile", () => {
       const slides = compile(doc);
 
       expect(slides).toHaveLength(1);
-      expect(slides[0].word).toBe("Hello");
+      expect(slides.map(s => s.word)).toEqual(["Hello"]);
     });
   });
 
@@ -56,20 +55,17 @@ describe("compile", () => {
       const slides = compile(doc);
 
       // First 2 slides should have blockId "1"
-      expect(slides[0].blockId).toBe("1");
-      expect(slides[1].blockId).toBe("1");
+      expect(slides.map(s => s.blockId).slice(0, 2)).toEqual(["1", "1"]);
 
       // Next slide should have blockId "2"
-      expect(slides[2].blockId).toBe("2");
+      expect(slides.map(s => s.blockId)[2]).toBe("2");
     });
 
     it("tracks wordIndex within block", () => {
       const doc = parsePlainText("One two three");
       const slides = compile(doc);
 
-      expect(slides[0].wordIndex).toBe(0);
-      expect(slides[1].wordIndex).toBe(1);
-      expect(slides[2].wordIndex).toBe(2);
+      expect(slides.map(s => s.wordIndex)).toEqual([0, 1, 2]);
     });
   });
 
@@ -78,16 +74,14 @@ describe("compile", () => {
       const doc = parsePlainText("Hello world");
       const slides = compile(doc);
 
+      if (!doc.blocks[0]) throw new Error("Block 0 is undefined");
       const block = doc.blocks[0];
-      expect(slides[0].startIndex).toBe(0);
-      expect(slides[0].endIndex).toBe(5);
-      expect(block.text.slice(slides[0].startIndex, slides[0].endIndex)).toBe(
+      expect(slides.map(s => s.startIndex)).toEqual([0, 6]);
+      expect(slides.map(s => s.endIndex)).toEqual([5, 11]);
+      expect(block.text.slice(slides[0]!.startIndex, slides[0]!.endIndex)).toBe(
         "Hello"
       );
-
-      expect(slides[1].startIndex).toBe(6);
-      expect(slides[1].endIndex).toBe(11);
-      expect(block.text.slice(slides[1].startIndex, slides[1].endIndex)).toBe(
+      expect(block.text.slice(slides[1]!.startIndex, slides[1]!.endIndex)).toBe(
         "world"
       );
     });
@@ -96,14 +90,13 @@ describe("compile", () => {
       const doc = parsePlainText("Hello, world!");
       const slides = compile(doc);
 
+      if (!doc.blocks[0]) throw new Error("Block 0 is undefined");
       const block = doc.blocks[0];
-      expect(slides[0].word).toBe("Hello,");
-      expect(block.text.slice(slides[0].startIndex, slides[0].endIndex)).toBe(
+      expect(slides.map(s => s.word)).toEqual(["Hello,", "world!"]);
+      expect(block.text.slice(slides[0]!.startIndex, slides[0]!.endIndex)).toBe(
         "Hello,"
       );
-
-      expect(slides[1].word).toBe("world!");
-      expect(block.text.slice(slides[1].startIndex, slides[1].endIndex)).toBe(
+      expect(block.text.slice(slides[1]!.startIndex, slides[1]!.endIndex)).toBe(
         "world!"
       );
     });
@@ -112,16 +105,17 @@ describe("compile", () => {
       const doc = parsePlainText("First.\n\nSecond.");
       const slides = compile(doc);
 
+      if (!doc.blocks[0] || !doc.blocks[1]) throw new Error("Blocks are undefined");
       // Check first block
       expect(doc.blocks[0].text.slice(
-        slides[0].startIndex,
-        slides[0].endIndex
+        slides[0]!.startIndex,
+        slides[0]!.endIndex
       )).toBe("First.");
 
       // Check second block
       expect(doc.blocks[1].text.slice(
-        slides[1].startIndex,
-        slides[1].endIndex
+        slides[1]!.startIndex,
+        slides[1]!.endIndex
       )).toBe("Second.");
     });
 
@@ -146,7 +140,7 @@ describe("compile", () => {
       const slides = compile(doc);
 
       for (const slide of slides) {
-        const block = doc.blocks[0];
+        const block = doc.blocks[0]!;
         const reconstructed = block.text.slice(
           slide.startIndex,
           slide.endIndex
@@ -164,18 +158,18 @@ describe("compile", () => {
 
       const blockEnds = slides.filter(s => s.isBlockEnd);
       expect(blockEnds).toHaveLength(2);
-      expect(blockEnds[0].word).toBe("block.");
-      expect(blockEnds[1].word).toBe("block.");
+      expect(blockEnds[0]!.word).toBe("block.");
+      expect(blockEnds[1]!.word).toBe("block.");
     });
 
     it("resets wordIndex on block boundary", () => {
       const doc = parsePlainText("One two.\n\nThree four.");
       const slides = compile(doc);
 
-      expect(slides[0].wordIndex).toBe(0);
-      expect(slides[1].wordIndex).toBe(1);
-      expect(slides[2].wordIndex).toBe(0); // Reset for new block
-      expect(slides[3].wordIndex).toBe(1);
+      expect(slides[0]!.wordIndex).toBe(0);
+      expect(slides[1]!.wordIndex).toBe(1);
+      expect(slides[2]!.wordIndex).toBe(0); // Reset for new block
+      expect(slides[3]!.wordIndex).toBe(1);
     });
   });
 
@@ -184,15 +178,15 @@ describe("compile", () => {
       const doc = parsePlainText("Only sentence.");
       const slides = compile(doc);
 
-      expect(slides[slides.length - 1].isDocumentEnd).toBe(true);
-      expect(slides[0].isDocumentEnd).toBe(false);
+      expect(slides[slides.length - 1]!.isDocumentEnd).toBe(true);
+      expect(slides[0]!.isDocumentEnd).toBe(false);
     });
 
     it("marks multiple blocks with final end", () => {
       const doc = parsePlainText("First.\n\nSecond.\n\nThird.");
       const slides = compile(doc);
 
-      const lastSlide = slides[slides.length - 1];
+      const lastSlide = slides[slides.length - 1]!;
       expect(lastSlide.isDocumentEnd).toBe(true);
       expect(lastSlide.isBlockEnd).toBe(true);
     });
@@ -202,7 +196,7 @@ describe("compile", () => {
       const slides = compile(doc);
 
       for (let i = 0; i < slides.length - 1; i++) {
-        expect(slides[i].isDocumentEnd).toBe(false);
+        expect(slides[i]!.isDocumentEnd).toBe(false);
       }
     });
   });
@@ -213,8 +207,8 @@ describe("compile", () => {
       const slides = compile(doc);
 
       // "word." at end of block should get paragraph multiplier
-      const firstBlockEnd = slides[1];
-      const secondBlockEnd = slides[3];
+      const firstBlockEnd = slides[1]!;
+      const secondBlockEnd = slides[3]!;
 
       expect(firstBlockEnd.isBlockEnd).toBe(true);
       expect(secondBlockEnd.isBlockEnd).toBe(true);
@@ -235,7 +229,7 @@ describe("compile", () => {
       const fastSlides = compile(doc, fastConfig);
 
       // Same words, slower config should have longer durations
-      expect(slowSlides[0].duration).toBeGreaterThan(fastSlides[0].duration);
+      expect(slowSlides[0]!.duration).toBeGreaterThan(fastSlides[0]!.duration);
     });
 
     it("respects custom multipliers", () => {
@@ -246,7 +240,7 @@ describe("compile", () => {
       };
 
       const slides = compile(doc, config);
-      expect(slides[0].duration).toBeGreaterThan(500); // Should be very long
+      expect(slides[0]!.duration).toBeGreaterThan(500); // Should be very long
     });
   });
 
@@ -261,14 +255,14 @@ Over the lazy dog it goes.`;
       expect(slides.length).toBeGreaterThan(0);
 
       // First slide
-      expect(slides[0].word).toBe("The");
-      expect(slides[0].blockId).toBe("1");
-      expect(slides[0].wordIndex).toBe(0);
-      expect(slides[0].isBlockEnd).toBe(false);
-      expect(slides[0].isDocumentEnd).toBe(false);
+      expect(slides[0]!.word).toBe("The");
+      expect(slides[0]!.blockId).toBe("1");
+      expect(slides[0]!.wordIndex).toBe(0);
+      expect(slides[0]!.isBlockEnd).toBe(false);
+      expect(slides[0]!.isDocumentEnd).toBe(false);
 
       // Last slide
-      const lastSlide = slides[slides.length - 1];
+      const lastSlide = slides[slides.length - 1]!;
       expect(lastSlide.isBlockEnd).toBe(true);
       expect(lastSlide.isDocumentEnd).toBe(true);
     });
@@ -311,9 +305,9 @@ Over the lazy dog it goes.`;
       const slides = compile(doc);
 
       // All slides should have startTime >= 0
-      expect(slides[0].startTime).toBe(0);
-      expect(slides[1].startTime).toBeGreaterThan(0);
-      expect(slides[2].startTime).toBeGreaterThan(slides[1].startTime);
+      expect(slides[0]!.startTime).toBe(0);
+      expect(slides[1]!.startTime).toBeGreaterThan(0);
+      expect(slides[2]!.startTime).toBeGreaterThan(slides[1]!.startTime);
     });
 
     it("startTime increases monotonically", () => {
@@ -321,8 +315,8 @@ Over the lazy dog it goes.`;
       const slides = compile(doc);
 
       for (let i = 1; i < slides.length; i++) {
-        expect(slides[i].startTime).toBeGreaterThanOrEqual(
-          slides[i - 1].startTime
+        expect(slides[i]!.startTime).toBeGreaterThanOrEqual(
+          slides[i - 1]!.startTime
         );
       }
     });
@@ -335,8 +329,8 @@ Over the lazy dog it goes.`;
       // Second block: "Second."
       // Time should include gap between blocks
 
-      const lastSlideOfFirstBlock = slides[0]; // "First."
-      const firstSlideOfSecondBlock = slides[1]; // "Second."
+      const lastSlideOfFirstBlock = slides[0]!; // "First."
+      const firstSlideOfSecondBlock = slides[1]!; // "Second."
 
       // Gap between blocks should be DEFAULT_TIMING_CONFIG.blockGap = 100ms
       const blockGap = DEFAULT_TIMING_CONFIG.blockGap;
@@ -352,7 +346,7 @@ Over the lazy dog it goes.`;
       const doc = parsePlainText("One two three");
       const slides = compile(doc);
 
-      const lastSlide = slides[slides.length - 1];
+      const lastSlide = slides[slides.length - 1]!;
       const totalDuration = lastSlide.startTime + lastSlide.duration;
 
       expect(totalDuration).toBeGreaterThan(0);

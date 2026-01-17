@@ -43,7 +43,9 @@ export function tokenize(
 
   while (currentIndex < text.length) {
     // Skip whitespace
-    if (/\s/.test(text[currentIndex])) {
+    const char = text[currentIndex];
+    if (char === undefined) throw new Error(`Character at index ${currentIndex} is undefined`);
+    if (/\s/.test(char)) {
       currentIndex++;
       continue;
     }
@@ -52,6 +54,7 @@ export function tokenize(
     const emDashMatch = text.slice(currentIndex).match(/^(—|---|--)/);
     if (emDashMatch) {
       const dashToken = emDashMatch[1];
+      if (dashToken === undefined) throw new Error(`Dash token is undefined`);
       tokens.push({
         word: dashToken,
         startIndex: currentIndex,
@@ -65,9 +68,11 @@ export function tokenize(
     let wordEnd = currentIndex;
     while (wordEnd < text.length) {
       // Stop at whitespace
-      if (/\s/.test(text[wordEnd])) break;
+      const wordChar = text[wordEnd];
+      if (wordChar === undefined) throw new Error(`Character at index ${wordEnd} is undefined`);
+      if (/\s/.test(wordChar)) break;
       // Stop at slash
-      if (text[wordEnd] === "/") break;
+      if (wordChar === "/") break;
       // Stop at em-dash (—, ---, or --)
       const remaining = text.slice(wordEnd);
       if (remaining.match(/^(—|---|--)/)) break;
@@ -98,6 +103,7 @@ export function tokenize(
 
       for (let i = 0; i < fragments.length; i++) {
         let fragment = fragments[i];
+        if (fragment === undefined) throw new Error(`Fragment at index ${i} is undefined`);
 
         // Add slash back to the last fragment if we removed it
         if (i === fragments.length - 1 && trailingSlash) {

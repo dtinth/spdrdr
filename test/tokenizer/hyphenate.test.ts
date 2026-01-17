@@ -11,7 +11,7 @@ describe("hyphenate", () => {
     // "understanding" is exactly 13 chars
     const result = hyphenate("understanding", 13);
     expect(result.length).toBe(1);
-    expect(result[0]).toBe("understanding");
+    expect(result[0]!).toBe("understanding");
   });
 
   it("respects custom maxWordLength", () => {
@@ -32,13 +32,13 @@ describe("hyphenate", () => {
   it("adds hyphens to non-final fragments", () => {
     const result = hyphenate("internationalization");
     for (let i = 0; i < result.length - 1; i++) {
-      expect(result[i]).toMatch(/-$/);
+      expect(result[i]!).toMatch(/-$/);
     }
   });
 
   it("does not add hyphen to final fragment", () => {
     const result = hyphenate("internationalization");
-    expect(result[result.length - 1]).not.toMatch(/-$/);
+    expect(result[result.length - 1]!).not.toMatch(/-$/);
   });
 
   it("reconstructs word from fragments", () => {

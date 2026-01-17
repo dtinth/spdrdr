@@ -52,6 +52,10 @@ export function hyphenate(word: string, maxWordLength: number = 13): string[] {
     const next = word[i + 1];
     const after = word[i + 2];
 
+    if (before === undefined || current === undefined || next === undefined || after === undefined) {
+      throw new Error(`Character at position ${i} is undefined`);
+    }
+
     if (
       vowels.includes(before) &&
       !vowels.includes(current) &&

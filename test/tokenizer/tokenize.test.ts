@@ -6,29 +6,29 @@ describe("tokenize", () => {
     it("splits on whitespace", () => {
       const tokens = tokenize("Hello world");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("Hello");
-      expect(tokens[1].word).toBe("world");
+      expect(tokens[0]!.word).toBe("Hello");
+      expect(tokens[1]!.word).toBe("world");
     });
 
     it("handles multiple spaces", () => {
       const tokens = tokenize("Hello  world");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("Hello");
-      expect(tokens[1].word).toBe("world");
+      expect(tokens[0]!.word).toBe("Hello");
+      expect(tokens[1]!.word).toBe("world");
     });
 
     it("handles leading and trailing whitespace", () => {
       const tokens = tokenize("  Hello world  ");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("Hello");
-      expect(tokens[1].word).toBe("world");
+      expect(tokens[0]!.word).toBe("Hello");
+      expect(tokens[1]!.word).toBe("world");
     });
 
     it("preserves punctuation with words", () => {
       const tokens = tokenize("Hello, world!");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("Hello,");
-      expect(tokens[1].word).toBe("world!");
+      expect(tokens[0]!.word).toBe("Hello,");
+      expect(tokens[1]!.word).toBe("world!");
     });
   });
 
@@ -38,27 +38,27 @@ describe("tokenize", () => {
       const tokens = tokenize(text);
 
       // "Hello" is at index 0-5
-      expect(tokens[0].startIndex).toBe(0);
-      expect(tokens[0].endIndex).toBe(5);
-      expect(text.slice(tokens[0].startIndex, tokens[0].endIndex)).toBe("Hello");
+      expect(tokens[0]!.startIndex).toBe(0);
+      expect(tokens[0]!.endIndex).toBe(5);
+      expect(text.slice(tokens[0]!.startIndex, tokens[0]!.endIndex)).toBe("Hello");
 
       // "world" is at index 6-11
-      expect(tokens[1].startIndex).toBe(6);
-      expect(tokens[1].endIndex).toBe(11);
-      expect(text.slice(tokens[1].startIndex, tokens[1].endIndex)).toBe("world");
+      expect(tokens[1]!.startIndex).toBe(6);
+      expect(tokens[1]!.endIndex).toBe(11);
+      expect(text.slice(tokens[1]!.startIndex, tokens[1]!.endIndex)).toBe("world");
     });
 
     it("tracks positions with punctuation", () => {
       const text = "Hello, world!";
       const tokens = tokenize(text);
 
-      expect(tokens[0].startIndex).toBe(0);
-      expect(tokens[0].endIndex).toBe(6);
-      expect(text.slice(tokens[0].startIndex, tokens[0].endIndex)).toBe("Hello,");
+      expect(tokens[0]!.startIndex).toBe(0);
+      expect(tokens[0]!.endIndex).toBe(6);
+      expect(text.slice(tokens[0]!.startIndex, tokens[0]!.endIndex)).toBe("Hello,");
 
-      expect(tokens[1].startIndex).toBe(7);
-      expect(tokens[1].endIndex).toBe(13);
-      expect(text.slice(tokens[1].startIndex, tokens[1].endIndex)).toBe("world!");
+      expect(tokens[1]!.startIndex).toBe(7);
+      expect(tokens[1]!.endIndex).toBe(13);
+      expect(text.slice(tokens[1]!.startIndex, tokens[1]!.endIndex)).toBe("world!");
     });
 
     it("verifies all tokens map back to original text", () => {
@@ -84,18 +84,18 @@ describe("tokenize", () => {
 
       // Each token should end with hyphen except last
       for (let i = 0; i < tokens.length - 1; i++) {
-        expect(tokens[i].word).toMatch(/-$/);
+        expect(tokens[i]!.word).toMatch(/-$/);
       }
 
       // Last token should not have hyphen
-      expect(tokens[tokens.length - 1].word).not.toMatch(/-$/);
+      expect(tokens[tokens.length - 1]!.word).not.toMatch(/-$/);
     });
 
     it("respects custom maxWordLength", () => {
       // With maxWordLength: 5, "Hello" (5 chars) should not be split
       const tokens1 = tokenize("Hello", { maxWordLength: 5 });
       expect(tokens1).toHaveLength(1);
-      expect(tokens1[0].word).toBe("Hello");
+      expect(tokens1[0]!.word).toBe("Hello");
 
       // With maxWordLength: 4, "Hello" should be split
       const tokens2 = tokenize("Hello", { maxWordLength: 4 });
@@ -137,16 +137,16 @@ describe("tokenize", () => {
     it("splits on forward slash, attaching slash to preceding word", () => {
       const tokens = tokenize("setTimeout/setInterval");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("setTimeout/");
-      expect(tokens[1].word).toBe("setInterval");
+      expect(tokens[0]!.word).toBe("setTimeout/");
+      expect(tokens[1]!.word).toBe("setInterval");
     });
 
     it("handles multiple slashes", () => {
       const tokens = tokenize("a/b/c");
       expect(tokens).toHaveLength(3);
-      expect(tokens[0].word).toBe("a/");
-      expect(tokens[1].word).toBe("b/");
-      expect(tokens[2].word).toBe("c");
+      expect(tokens[0]!.word).toBe("a/");
+      expect(tokens[1]!.word).toBe("b/");
+      expect(tokens[2]!.word).toBe("c");
     });
 
     it("tracks positions correctly with slashes", () => {
@@ -154,30 +154,30 @@ describe("tokenize", () => {
       const tokens = tokenize(text);
 
       // "setTimeout/" includes the slash
-      expect(tokens[0].startIndex).toBe(0);
-      expect(tokens[0].endIndex).toBe(10);
-      expect(text.slice(tokens[0].startIndex, tokens[0].endIndex)).toBe("setTimeout");
+      expect(tokens[0]!.startIndex).toBe(0);
+      expect(tokens[0]!.endIndex).toBe(10);
+      expect(text.slice(tokens[0]!.startIndex, tokens[0]!.endIndex)).toBe("setTimeout");
 
       // "setInterval" starts after the slash
-      expect(tokens[1].startIndex).toBe(11);
-      expect(tokens[1].endIndex).toBe(22);
-      expect(text.slice(tokens[1].startIndex, tokens[1].endIndex)).toBe("setInterval");
+      expect(tokens[1]!.startIndex).toBe(11);
+      expect(tokens[1]!.endIndex).toBe(22);
+      expect(text.slice(tokens[1]!.startIndex, tokens[1]!.endIndex)).toBe("setInterval");
     });
 
     it("handles slash with trailing punctuation", () => {
       const tokens = tokenize("Hello/world!");
       expect(tokens).toHaveLength(2);
-      expect(tokens[0].word).toBe("Hello/");
-      expect(tokens[1].word).toBe("world!");
+      expect(tokens[0]!.word).toBe("Hello/");
+      expect(tokens[1]!.word).toBe("world!");
     });
 
     it("handles mixed whitespace and slashes", () => {
       const tokens = tokenize("foo/bar hello/world");
       expect(tokens).toHaveLength(4);
-      expect(tokens[0].word).toBe("foo/");
-      expect(tokens[1].word).toBe("bar");
-      expect(tokens[2].word).toBe("hello/");
-      expect(tokens[3].word).toBe("world");
+      expect(tokens[0]!.word).toBe("foo/");
+      expect(tokens[1]!.word).toBe("bar");
+      expect(tokens[2]!.word).toBe("hello/");
+      expect(tokens[3]!.word).toBe("world");
     });
 
     it("verifies all tokens with slashes map back to original text", () => {
@@ -197,30 +197,30 @@ describe("tokenize", () => {
     it("treats em-dash as its own token", () => {
       const tokens = tokenize("some text—wait—some more text");
       expect(tokens).toHaveLength(8);
-      expect(tokens[0].word).toBe("some");
-      expect(tokens[1].word).toBe("text");
-      expect(tokens[2].word).toBe("—");
-      expect(tokens[3].word).toBe("wait");
-      expect(tokens[4].word).toBe("—");
-      expect(tokens[5].word).toBe("some");
-      expect(tokens[6].word).toBe("more");
-      expect(tokens[7].word).toBe("text");
+      expect(tokens[0]!.word).toBe("some");
+      expect(tokens[1]!.word).toBe("text");
+      expect(tokens[2]!.word).toBe("—");
+      expect(tokens[3]!.word).toBe("wait");
+      expect(tokens[4]!.word).toBe("—");
+      expect(tokens[5]!.word).toBe("some");
+      expect(tokens[6]!.word).toBe("more");
+      expect(tokens[7]!.word).toBe("text");
     });
 
     it("treats -- as em-dash", () => {
       const tokens = tokenize("hello -- world");
       expect(tokens).toHaveLength(3);
-      expect(tokens[0].word).toBe("hello");
-      expect(tokens[1].word).toBe("--");
-      expect(tokens[2].word).toBe("world");
+      expect(tokens[0]!.word).toBe("hello");
+      expect(tokens[1]!.word).toBe("--");
+      expect(tokens[2]!.word).toBe("world");
     });
 
     it("treats --- as em-dash", () => {
       const tokens = tokenize("hello --- world");
       expect(tokens).toHaveLength(3);
-      expect(tokens[0].word).toBe("hello");
-      expect(tokens[1].word).toBe("---");
-      expect(tokens[2].word).toBe("world");
+      expect(tokens[0]!.word).toBe("hello");
+      expect(tokens[1]!.word).toBe("---");
+      expect(tokens[2]!.word).toBe("world");
     });
 
     it("handles multiple consecutive em-dashes", () => {
