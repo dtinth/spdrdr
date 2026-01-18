@@ -213,6 +213,28 @@ describe("parseHtml", () => {
       expect(doc.blocks[0]!.text).toContain("<tag>");
       expect(doc.blocks[0]!.text).toContain("&");
     });
+
+    it("captures text outside HTML elements", () => {
+      const doc = parseHtml("<p>hello</p>world");
+      expect(doc.blocks).toHaveLength(2);
+      expect(doc.blocks[0]!.text).toBe("hello");
+      expect(doc.blocks[1]!.text).toBe("world");
+    });
+
+    it("captures text before HTML elements", () => {
+      const doc = parseHtml("before<p>inside</p>");
+      expect(doc.blocks).toHaveLength(2);
+      expect(doc.blocks[0]!.text).toBe("before");
+      expect(doc.blocks[1]!.text).toBe("inside");
+    });
+
+    it("captures text between HTML elements", () => {
+      const doc = parseHtml("<p>first</p>between<p>second</p>");
+      expect(doc.blocks).toHaveLength(3);
+      expect(doc.blocks[0]!.text).toBe("first");
+      expect(doc.blocks[1]!.text).toBe("between");
+      expect(doc.blocks[2]!.text).toBe("second");
+    });
   });
 
   describe("list handling", () => {

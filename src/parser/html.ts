@@ -49,6 +49,18 @@ function processNodes(
   if (!Array.isArray(nodes)) return;
 
   for (const node of nodes) {
+    // Handle text nodes - emit as paragraphs
+    if (node.type === "text") {
+      const text = normalizeText(node.value);
+      if (text.trim().length > 0) {
+        onBlock({
+          blockType: "paragraph",
+          text,
+        });
+      }
+      continue;
+    }
+
     // Skip non-element nodes
     if (node.type !== "element") continue;
 
