@@ -2,8 +2,6 @@ import mitt from "mitt";
 import type { Slide } from "./types";
 import {
   getPlaybackPosition,
-  getAccelerationEndPosition,
-  getAccelerationEndTime,
   DEFAULT_ACCELERATION_CONFIG,
   type AccelerationConfig,
 } from "./timing/acceleration";
@@ -43,6 +41,7 @@ export class Player {
   private animationFrameId: number | null = null;
   private lastBlockId: string | null = null;
   private wallClockStartTime: number = 0; // When play() was called
+  private playbackBasePosition: number = 0; // Base position for acceleration offset
   private accelerationConfig: AccelerationConfig;
   private timerApi: TimerApi;
   public events = mitt<PlayerEvents>();
@@ -108,12 +107,15 @@ export class Player {
    * Update playback position and emit events
    */
   private updatePlayback(elapsedWallClockTime: number): void {
-    const playbackPosition = getPlaybackPosition(
+    // Get the acceleration offset (starts at 0, increases as we accelerate)
+    const accelerationOffset = getPlaybackPosition(
       elapsedWallClockTime,
       this.accelerationConfig
     );
     const totalDuration = this.getTotalDuration();
 
+    // Apply acceleration offset to the base position where we resumed
+    const playbackPosition = this.playbackBasePosition + accelerationOffset;
     // Clamp to valid range
     this.state.currentTime = Math.min(playbackPosition, totalDuration);
 
@@ -189,31 +191,9 @@ export class Player {
     }
 
     this.state.status = "playing";
+    // Start fresh acceleration from current position
+    this.playbackBasePosition = this.state.currentTime;
     this.wallClockStartTime = Date.now();
-
-    // If we're resuming from pause or mid-playback, adjust wall clock start
-    // so that the current playback position is maintained
-    const totalDuration = this.getTotalDuration();
-    if (this.state.currentTime > 0 && this.state.currentTime < totalDuration) {
-      // We need to find what wall-clock time would give us currentTime
-      // This requires solving the acceleration equation backwards
-      // For now, we'll use a simple approach: assume we're in linear phase
-      const accelEndPos = getAccelerationEndPosition(this.accelerationConfig);
-      const accelEndTime = getAccelerationEndTime(this.accelerationConfig);
-
-      if (this.state.currentTime < accelEndPos) {
-        // In acceleration phase: solve t = sqrt(2 * currentTime / accelDuration)
-        const accelDuration = this.accelerationConfig.accelerationDuration;
-        const normalizedPos = this.state.currentTime / (0.5 * accelDuration);
-        const elapsedTime = Math.sqrt(normalizedPos) * accelDuration;
-        this.wallClockStartTime = Date.now() - elapsedTime;
-      } else {
-        // In linear phase: elapsed = accelEndTime + (currentTime - accelEndPos)
-        const elapsedTime =
-          accelEndTime + (this.state.currentTime - accelEndPos);
-        this.wallClockStartTime = Date.now() - elapsedTime;
-      }
-    }
 
     this.events.emit("statusChange", { status: "playing" });
     this.animationFrameId = this.timerApi.requestAnimationFrame(this.animate);

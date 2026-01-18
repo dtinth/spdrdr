@@ -269,8 +269,8 @@ describe("Player", () => {
       });
 
       player.play();
-      // Block 2 starts at 300ms content, which requires ~775ms real time with acceleration
-      jest.advanceTimersByTime(850);
+      // Block 2 starts at 300ms content, which requires ~1095ms real time with 2s acceleration
+      jest.advanceTimersByTime(1150);
 
       // Should have changed from block 1 to block 2
       expect(blockChanges.length).toBeGreaterThan(0);
@@ -301,9 +301,9 @@ describe("Player", () => {
       });
 
       player.play();
-      // Total content duration is 400ms, with acceleration starting at 0, we reach ~500ms content by 1000ms real time
-      // But content ends at 400ms, so wait 1100ms to be safe
-      jest.advanceTimersByTime(1100);
+      // Total content duration is 400ms, with 2s acceleration we reach 400ms at ~1265ms real time
+      // Wait 1350ms to be safe
+      jest.advanceTimersByTime(1350);
 
       expect(completed).toBe(true);
     });
@@ -316,14 +316,14 @@ describe("Player", () => {
       });
 
       player.play();
-      jest.advanceTimersByTime(1100);
+      jest.advanceTimersByTime(1350);
 
       expect(finalStatus as unknown as string).toBe("complete");
     });
 
     it("resets to start on play after complete", () => {
       player.play();
-      jest.advanceTimersByTime(1100);
+      jest.advanceTimersByTime(1350);
 
       player.play();
 
@@ -348,8 +348,8 @@ describe("Player", () => {
       });
 
       singleSlidePlayer.play();
-      // Single slide is 100ms content, which requires ~450ms real time with acceleration
-      jest.advanceTimersByTime(500);
+      // Single slide is 100ms content, which requires ~632ms real time with 2s acceleration
+      jest.advanceTimersByTime(700);
 
       expect(completeEmitted).toBe(true);
     });
