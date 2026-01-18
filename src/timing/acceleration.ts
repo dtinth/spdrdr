@@ -2,20 +2,20 @@
  * Acceleration Curve: Maps wall-clock time to playback position
  *
  * Physics: u=0 (start at rest), v=1 (reach 1x speed), a=1 (acceleration)
- * Acceleration phase duration: t = v/a = 1/1 = 1 second (1000ms)
- * Distance during acceleration: s = u*t + 0.5*a*t² = 0.5*1² = 0.5s (500ms playback)
+ * Acceleration phase duration: t = v/a = 1/1 = 1 second adjusted to 2 seconds (2000ms)
+ * Distance during acceleration: s = u*t + 0.5*a*t² = 0.5*1*2² = 2s (2000ms playback)
  *
- * After 1000ms of real time, we transition to linear motion at 1x speed
+ * After 2000ms of real time, we transition to linear motion at 1x speed
  */
 
 export interface AccelerationConfig {
-  /** Duration of acceleration phase in milliseconds (default: 1000ms) */
+  /** Duration of acceleration phase in milliseconds (default: 2000ms) */
   accelerationDuration: number;
 }
 
-/** Default: 1 second acceleration from 0 to 1x speed */
+/** Default: 2 second acceleration from 0 to 1x speed */
 export const DEFAULT_ACCELERATION_CONFIG: AccelerationConfig = {
-  accelerationDuration: 1000,
+  accelerationDuration: 2000,
 };
 
 /**
@@ -26,11 +26,11 @@ export const DEFAULT_ACCELERATION_CONFIG: AccelerationConfig = {
  * @returns Playback position in milliseconds
  *
  * @example
- * // After 1 second of real time
- * getPlaybackPosition(1000) // Returns 500ms (halfway through content)
+ * // After 2 seconds of real time (end of acceleration)
+ * getPlaybackPosition(2000) // Returns 1000ms
  *
- * // After 2 seconds of real time (1s accel + 1s linear)
- * getPlaybackPosition(2000) // Returns 1500ms (500 + 1000)
+ * // After 4 seconds of real time (2s accel + 2s linear)
+ * getPlaybackPosition(4000) // Returns 3000ms (1000 + 2000)
  */
 export function getPlaybackPosition(
   wallClockTime: number,

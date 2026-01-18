@@ -18,64 +18,64 @@ describe("Acceleration Curve", () => {
       expect(position).toBe(0);
     });
 
-    it("returns position at quarter acceleration (250ms)", () => {
-      // t = 250ms = 0.25 * accelerationDuration
-      // s = 0.5 * (0.25)² * 1000 = 0.5 * 0.0625 * 1000 = 31.25ms
-      const position = getPlaybackPosition(250);
-      expect(position).toBe(31.25);
-    });
-
-    it("returns position at half acceleration (500ms)", () => {
-      // t = 500ms = 0.5 * accelerationDuration
-      // s = 0.5 * (0.5)² * 1000 = 0.5 * 0.25 * 1000 = 125ms
+    it("returns position at quarter acceleration (500ms)", () => {
+      // t = 500ms = 0.25 * accelerationDuration (2000ms)
+      // s = 0.5 * (0.25)² * 2000 = 0.5 * 0.0625 * 2000 = 62.5ms
       const position = getPlaybackPosition(500);
-      expect(position).toBe(125);
+      expect(position).toBe(62.5);
     });
 
-    it("returns position at 75% acceleration (750ms)", () => {
-      // t = 750ms = 0.75 * accelerationDuration
-      // s = 0.5 * (0.75)² * 1000 = 0.5 * 0.5625 * 1000 = 281.25ms
-      const position = getPlaybackPosition(750);
-      expect(position).toBe(281.25);
-    });
-
-    it("returns 500ms at end of acceleration phase (1000ms)", () => {
-      // t = 1000ms = 1 * accelerationDuration
-      // s = 0.5 * (1)² * 1000 = 500ms
+    it("returns position at half acceleration (1000ms)", () => {
+      // t = 1000ms = 0.5 * accelerationDuration (2000ms)
+      // s = 0.5 * (0.5)² * 2000 = 0.5 * 0.25 * 2000 = 250ms
       const position = getPlaybackPosition(1000);
-      expect(position).toBe(500);
+      expect(position).toBe(250);
+    });
+
+    it("returns position at 75% acceleration (1500ms)", () => {
+      // t = 1500ms = 0.75 * accelerationDuration (2000ms)
+      // s = 0.5 * (0.75)² * 2000 = 0.5 * 0.5625 * 2000 = 562.5ms
+      const position = getPlaybackPosition(1500);
+      expect(position).toBe(562.5);
+    });
+
+    it("returns 1000ms at end of acceleration phase (2000ms)", () => {
+      // t = 2000ms = 1 * accelerationDuration
+      // s = 0.5 * (1)² * 2000 = 1000ms
+      const position = getPlaybackPosition(2000);
+      expect(position).toBe(1000);
     });
   });
 
   describe("getPlaybackPosition - linear phase", () => {
-    it("continues linearly after acceleration (1500ms)", () => {
-      // 500ms from accel + 500ms at 1x speed = 1000ms playback
-      const position = getPlaybackPosition(1500);
-      expect(position).toBe(1000);
+    it("continues linearly after acceleration (3000ms)", () => {
+      // 1000ms from accel + 1000ms at 1x speed = 2000ms playback
+      const position = getPlaybackPosition(3000);
+      expect(position).toBe(2000);
     });
 
-    it("continues linearly after acceleration (2000ms)", () => {
-      // 500ms from accel + 1000ms at 1x speed = 1500ms playback
-      const position = getPlaybackPosition(2000);
-      expect(position).toBe(1500);
+    it("continues linearly after acceleration (4000ms)", () => {
+      // 1000ms from accel + 2000ms at 1x speed = 3000ms playback
+      const position = getPlaybackPosition(4000);
+      expect(position).toBe(3000);
     });
 
-    it("continues linearly after acceleration (5000ms)", () => {
-      // 500ms from accel + 4000ms at 1x speed = 4500ms playback
-      const position = getPlaybackPosition(5000);
-      expect(position).toBe(4500);
+    it("continues linearly after acceleration (6000ms)", () => {
+      // 1000ms from accel + 4000ms at 1x speed = 5000ms playback
+      const position = getPlaybackPosition(6000);
+      expect(position).toBe(5000);
     });
 
     it("handles large time values correctly", () => {
-      // 500ms from accel + 9500ms at 1x speed = 10000ms playback
+      // 1000ms from accel + 8000ms at 1x speed = 9000ms playback
       const position = getPlaybackPosition(10000);
-      expect(position).toBe(10000 - 500);
+      expect(position).toBe(10000 - 1000);
     });
   });
 
   describe("getPlaybackPosition - physics validation", () => {
     it("playback position increases monotonically", () => {
-      const times = [0, 100, 250, 500, 750, 1000, 1500, 2000, 5000];
+      const times = [0, 200, 400, 800, 1000, 1500, 2000, 3000, 4000];
       const positions = times.map(t => getPlaybackPosition(t));
 
       for (let i = 1; i < positions.length; i++) {
@@ -84,14 +84,14 @@ describe("Acceleration Curve", () => {
     });
 
     it("acceleration phase grows non-linearly (accelerating)", () => {
-      // Distance in first 250ms
-      const dist1 = getPlaybackPosition(250);
-      // Distance in second 250ms (250-500ms)
-      const dist2 = getPlaybackPosition(500) - getPlaybackPosition(250);
-      // Distance in third 250ms (500-750ms)
-      const dist3 = getPlaybackPosition(750) - getPlaybackPosition(500);
-      // Distance in fourth 250ms (750-1000ms)
-      const dist4 = getPlaybackPosition(1000) - getPlaybackPosition(750);
+      // Distance in first 500ms
+      const dist1 = getPlaybackPosition(500);
+      // Distance in second 500ms (500-1000ms)
+      const dist2 = getPlaybackPosition(1000) - getPlaybackPosition(500);
+      // Distance in third 500ms (1000-1500ms)
+      const dist3 = getPlaybackPosition(1500) - getPlaybackPosition(1000);
+      // Distance in fourth 500ms (1500-2000ms)
+      const dist4 = getPlaybackPosition(2000) - getPlaybackPosition(1500);
 
       // Each interval should be larger than the previous (due to acceleration)
       expect(dist2).toBeGreaterThan(dist1);
@@ -100,13 +100,13 @@ describe("Acceleration Curve", () => {
     });
 
     it("linear phase moves at constant velocity (1x speed)", () => {
-      // After acceleration, every 100ms of wall time = 100ms playback
-      const pos1000 = getPlaybackPosition(1000);
-      const pos1100 = getPlaybackPosition(1100);
-      const pos1200 = getPlaybackPosition(1200);
+      // After acceleration (2000ms), every 100ms of wall time = 100ms playback
+      const pos2100 = getPlaybackPosition(2100);
+      const pos2200 = getPlaybackPosition(2200);
+      const pos2300 = getPlaybackPosition(2300);
 
-      const diff1 = pos1100 - pos1000;
-      const diff2 = pos1200 - pos1100;
+      const diff1 = pos2200 - pos2100;
+      const diff2 = pos2300 - pos2200;
 
       expect(diff1).toBe(100);
       expect(diff2).toBe(100);
@@ -142,9 +142,9 @@ describe("Acceleration Curve", () => {
   });
 
   describe("getAccelerationEndTime", () => {
-    it("returns 1000ms for default config", () => {
+    it("returns 2000ms for default config", () => {
       const endTime = getAccelerationEndTime();
-      expect(endTime).toBe(1000);
+      expect(endTime).toBe(2000);
     });
 
     it("returns configured duration", () => {
@@ -154,9 +154,9 @@ describe("Acceleration Curve", () => {
   });
 
   describe("getAccelerationEndPosition", () => {
-    it("returns 500ms for default config", () => {
+    it("returns 1000ms for default config", () => {
       const endPos = getAccelerationEndPosition();
-      expect(endPos).toBe(500);
+      expect(endPos).toBe(1000);
     });
 
     it("returns 0.5 * duration for custom config", () => {
@@ -176,15 +176,15 @@ describe("Acceleration Curve", () => {
 
   describe("physics verification", () => {
     it("acceleration phase: s = 0.5 * a * t²", () => {
-      // Verify the physics formula: with a=1, duration=1000
-      // At t, position should be 0.5 * (t/1000)² * 1000
+      // Verify the physics formula: with a=1, duration=2000
+      // At t, position should be 0.5 * (t/2000)² * 2000
 
       const testCases = [
         { time: 0, expected: 0 },
-        { time: 100, expected: 5 }, // 0.5 * 0.01 * 1000
-        { time: 200, expected: 20 }, // 0.5 * 0.04 * 1000
-        { time: 500, expected: 125 }, // 0.5 * 0.25 * 1000
-        { time: 1000, expected: 500 }, // 0.5 * 1.0 * 1000
+        { time: 200, expected: 10 }, // 0.5 * 0.01 * 2000
+        { time: 400, expected: 40 }, // 0.5 * 0.04 * 2000
+        { time: 1000, expected: 250 }, // 0.5 * 0.25 * 2000
+        { time: 2000, expected: 1000 }, // 0.5 * 1.0 * 2000
       ];
 
       testCases.forEach(({ time, expected }) => {
@@ -194,18 +194,18 @@ describe("Acceleration Curve", () => {
     });
 
     it("linear phase: s = base + v * t", () => {
-      // After 1000ms wall time = 500ms playback
+      // After 2000ms wall time = 1000ms playback
       // For each additional ms of wall time, add 1ms of playback
-      const basePos = getPlaybackPosition(1000); // 500ms
-      expect(basePos).toBe(500);
+      const basePos = getPlaybackPosition(2000); // 1000ms
+      expect(basePos).toBe(1000);
 
-      // At 1100ms wall time
-      const pos1100 = getPlaybackPosition(1100); // 500 + 100 = 600ms
-      expect(pos1100).toBe(600);
+      // At 2100ms wall time
+      const pos2100 = getPlaybackPosition(2100); // 1000 + 100 = 1100ms
+      expect(pos2100).toBe(1100);
 
-      // At 2000ms wall time
-      const pos2000 = getPlaybackPosition(2000); // 500 + 1000 = 1500ms
-      expect(pos2000).toBe(1500);
+      // At 3000ms wall time
+      const pos3000 = getPlaybackPosition(3000); // 1000 + 1000 = 2000ms
+      expect(pos3000).toBe(2000);
     });
   });
 });
